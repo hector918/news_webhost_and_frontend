@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const user = express.Router();
 const nodemailer = require('nodemailer');
