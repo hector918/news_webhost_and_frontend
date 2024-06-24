@@ -3,6 +3,8 @@ const os = require('os');
 const https = require('https');
 const fs = require('fs');
 const app = require('./app');
+require('dotenv').config();
+
 const numCPUs = os.cpus().length;
 if (cluster.isMaster) {
   console.log(`Master ${process.pid} is running`);
@@ -19,11 +21,20 @@ if (cluster.isMaster) {
 } else {
 
   const options = {
-    key: fs.readFileSync('./ssl/key.pem'),
-    cert: fs.readFileSync('./ssl/cert.pem')
+    key: fs.readFileSync(process.env.SSL_KEY_PATH),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH),
+    secureOptions: require('constants').SSL_OP_NO_SSLv2 | require('constants').SSL_OP_NO_SSLv3 | require('constants').SSL_OP_NO_TLSv1 | require('constants').SSL_OP_NO_TLSv1_1,
+    ciphers: [
+      'ECDHE-RSA-AES256-GCM-SHA384',
+      'ECDHE-RSA-AES128-GCM-SHA256',
+      'ECDHE-RSA-AES256-SHA384',
+      'ECDHE-RSA-AES128-SHA256',
+      'ECDHE-RSA-AES256-SHA',
+      'ECDHE-RSA-AES128-SHA',
+    ].join(':'),
+    honorCipherOrder: true,
   };
-
-  https.createServer(options, app).listen(8443, () => {
+  https.createServer(options, app).listen(process.env.WEB_PORT || 8443, () => {
     console.log(`Worker ${process.pid} started`);
   });
 }

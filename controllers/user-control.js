@@ -42,7 +42,19 @@ user.post('/login', async (req, res) => {
   const user = users.find(u => u.email === email);
 
   if (user && await bcrypt.compare(password, user.password)) {
+    // Example of saving IP with session data
+    req.session.ip = req.ip;
     req.session.user = user;
+    // Save the session
+    req.session.save((err) => {
+      if (err) {
+        // Handle error
+        console.error(err);
+        res.status(500).send('Session save error');
+      } else {
+        res.send('Session saved');
+      }
+    });
     res.send('Login successful!');
   } else {
     res.status(401).send('Invalid email or password');
@@ -68,5 +80,13 @@ user.get('/logout', (req, res) => {
   });
 });
 
+const session_info = (req, res, next) => {
+  req.session.ip = req.ip;
+  next();
+}
 
-module.exports = user;
+const vaildate_login = (req, res, next) => {
+  // if()
+}
+
+module.exports = { user, session_info, vaildate_login };

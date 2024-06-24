@@ -5,9 +5,8 @@ const app = express();
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const session = require('express-session');
-const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
+const { session } = require('./db/session');
+const { user, session_info } = require('./controllers/user-control');
 
 //////////////////////////////////////////////////////
 const limiter = rateLimit({
@@ -20,34 +19,33 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
-//
+// Session configuration
+app.use(session);//adding ip to the session
+app.use(session_info);
 // Body parser
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Session configuration
-app.use(session({
-  secret: 'your-secret-key',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true }
-}));
+/////////////////////////
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
-
 // Hide the "secret" directory
 app.use('/public/secret', (req, res, next) => {
   res.status(403).send('Forbidden');
 });
-
-app.use('/v1/user', require('./controllers/user-control'));
-
 app.get('/files', (req, res) => {
   public_path = path.join(__dirname, 'public')
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+//controller route
+app.use('/v1/user', user);
+
+//base route
 app.get('/', (req, res) => {
   res.send('Hello, HTTPS world!');
 });
+///404
+app.get('*', (req, res) => {
+  res.status(404).send('404');
+})
 
 module.exports = app;
