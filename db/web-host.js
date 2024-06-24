@@ -2,7 +2,7 @@ const pgp = require("pg-promise")();
 require("dotenv").config();
 
 var connectionOptions = {
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.WEB_HOST_DB_URL,
   max: 10, // poolSize
   idleTimeoutMillis: 10000 // poolIdleTimeout
 };

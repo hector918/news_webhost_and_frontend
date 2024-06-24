@@ -18,7 +18,14 @@ const transporter = nodemailer.createTransport({
 // Registration endpoint
 user.post('/register', async (req, res) => {
   const { email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Generate a salt
+  const saltRounds = 10;
+  const salt = await bcrypt.genSalt(saltRounds);
+
+  // Hash the password with the generated salt
+  const hashedPassword = await bcrypt.hash(password, salt);
+
   users.push({ email, password: hashedPassword });
 
   const mailOptions = {
