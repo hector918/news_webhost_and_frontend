@@ -7,7 +7,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { session } = require('./db/session');
 const { user, session_info } = require('./controllers/user-control');
-
 //////////////////////////////////////////////////////
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000,
