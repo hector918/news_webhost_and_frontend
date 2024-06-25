@@ -7,6 +7,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { session } = require('./db/session');
 const { user, session_info } = require('./controllers/user-control');
+const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
+
 //////////////////////////////////////////////////////
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000,
@@ -39,8 +41,17 @@ app.get('/files', (req, res) => {
 app.use('/v1/user', user);
 
 //base route
-app.get('/', (req, res) => {
+app.get('/testing', async (req, res) => {
+  process.on('message', (msg) => {
+    console.log(msg)
+    if (msg.type === 'response') {
+      console.log(`master response ${msg.result}`);
+    }
+  });
+  process.send({ type: 'query_user_info', data: 'ab' });
+
   res.send('Hello, HTTPS world!');
+
 });
 ///404
 app.get('*', (req, res) => {
