@@ -51,30 +51,44 @@ To install and run the News Hub demo, follow these steps:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/newshub.git
+   git clone https://github.com/hector918/news_webhost_and_frontend.git
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd
+   cd news_webhost_and_frontend
    ```
 
 3. Install the necessary dependencies:
 
    ```bash
-   pip install -r requirements.txt
    npm install
    ```
 
-4. Run the application:
+4. You will need the .env that Includes
+
    ```bash
-   python main.py
+   WEB_PORT=
+   SSL_KEY_PATH='./ssl/key.pem'
+   SSL_CERT_PATH='./ssl/cert.pem'
+   EMAIL=
+   EMAIL_PASSWORD=
+   SESSION_SECRET=
+   SESSION_DB_URL=
+   WEB_HOST_DB_URL=
+   LOGGING_DB_URL=
+   ```
+
+5. Run the application:
+
+   ```bash
+    node server.js
    ```
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the Apache License Version 2.0. See the `LICENSE` file for details.
 
 ## Contact
 
