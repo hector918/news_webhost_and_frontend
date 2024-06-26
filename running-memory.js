@@ -3,14 +3,24 @@ users_map = new Map();
 users_map.set("a", 1);
 
 
-function masterProcessQuery(type, data) {
-  switch (type) {
-    case "query_user_info":
-      return users_map.get(data);
-
-    default:
-      return "unknown";
+function masterProcessQueries(msgs) {
+  const ret = {};
+  for (const [key, value] of Object.entries(msgs)) {
+    ret[key] = one_query(key, value);
   }
+  return ret;
+  //
+  function one_query(type, data) {
+    switch (type) {
+      case "query_user_info":
+        return users_map.get(data);
+      case "update_user_info":
+        return users_map.set(data.user_name, data.user_info);
+      default:
+        return "unknown";
+    }
+  }
+
 }
 
-module.exports = { masterProcessQuery }
+module.exports = { masterProcessQueries }

@@ -5,7 +5,7 @@ const fs = require('fs');
 const app = require('./app');
 require('dotenv').config();
 
-const { masterProcessQuery } = require('./running-memory');
+const { masterProcessQueries } = require('./running-memory');
 
 const numCPUs = os.cpus().length;
 if (cluster.isMaster) {
@@ -14,12 +14,12 @@ if (cluster.isMaster) {
   // Fork workers.
   for (let i = 0; i < numCPUs; i++) {
     const worker = cluster.fork();
-    worker.on('message', (msg) => {
-      if (msg.type !== undefined) {
+    worker.on('message', (message_from_worker) => {
+      if (typeof message_from_worker === 'object') {
         // Process the query and send a response back to the worker
-        const result = masterProcessQuery(msg.type, msg.data);
+        const result = masterProcessQueries(message_from_worker);
 
-        worker.send({ type: 'response', result });
+        worker.send({ type: 'responses', result });
       }
     });
 

@@ -29,6 +29,27 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 // Hide the "secret" directory
+
+app.use((req, res, next) => {
+  process.on('message', ({ type, result }) => {
+    if (type === 'responses') {
+      for (const [key, value] of Object.entries(result)) {
+        console.log(`master responses ${key}: ${value}`);
+      }
+    }
+    for (const key in result) {
+      switch (result) {
+        case "query_user_info":
+          req.user_info = result[key];
+          break;
+      }
+    }
+    next()
+  });
+  process.send({ 'query_user_info': 'a' });
+
+});
+
 app.use('/public/secret', (req, res, next) => {
   res.status(403).send('Forbidden');
 });
@@ -42,13 +63,6 @@ app.use('/v1/user', user);
 
 //base route
 app.get('/testing', async (req, res) => {
-  process.on('message', (msg) => {
-    console.log(msg)
-    if (msg.type === 'response') {
-      console.log(`master response ${msg.result}`);
-    }
-  });
-  process.send({ type: 'query_user_info', data: 'ab' });
 
   res.send('Hello, HTTPS world!');
 
