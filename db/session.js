@@ -20,7 +20,7 @@ class CustomPgSessionStore extends pgSession {
   }
   async set(sid, sess, cb) {
     const ip = sess.ip; // Assuming `ip` is passed in `sess`
-    delete sess.ip;     // Remove `ip` from session data
+    // delete sess.ip;     // Remove `ip` from session data
     const data = JSON.stringify(sess);
     const query = `
       INSERT INTO session (sid, sess, ip, expire) 

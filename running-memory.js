@@ -1,7 +1,5 @@
-
+const { get_user } = require('./queries/users-query');
 users_map = new Map();
-users_map.set("a", 1);
-
 
 function masterProcessQueries(msgs) {
   const ret = {};

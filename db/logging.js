@@ -2,7 +2,7 @@ const pgp = require("pg-promise")();
 require("dotenv").config();
 
 var connectionOptions = {
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.LOGGING_DB_URL,
   max: 10, // poolSize
   idleTimeoutMillis: 10000 // poolIdleTimeout
 };
@@ -11,8 +11,8 @@ try {
   var db = pgp(connectionOptions);
   if (db) {
     db.oneOrNone("SET TIME ZONE 'US/Eastern';SELECT current_setting('TIMEZONE') AS current_timezone;")
-      .then(res => console.log("database timezone", res))
-      .catch(error => console.error("error setting timezone", error));
+      .then(res => console.log("database LOGGING_DB_URL timezone", res))
+      .catch(error => console.error("LOGGING_DB_URL error setting timezone", error));
   }
 } catch (error) {
   console.error("database connection error", error);
@@ -25,6 +25,35 @@ log level
 3 = system error
 4 = code block error catch
 */
+const access_logging = (ip, path, email, time_lapse) => {
+  (async () => {
+    console.log(ip, path, email, time_lapse);
+    let session = null;
+    try {
+      // Acquire a new session
+      session = await db.connect({ direct: true });
+      // Start a transaction within the session
+      await session.tx(async t => {
+        // Execute the INSERT query
+        const insertQuery = `
+          INSERT INTO web_host_access_log
+          (ip, access_path, email, time_lapse)
+          VALUES
+          ($[ip], $[path], $[email], $[time_lapse]);
+        `;
+        t.oneOrNone(insertQuery, { ip, path, email, time_lapse })
+
+      });
+    } catch (error) {
+      console.error('Error inserting data:', error);
+    } finally {
+      // Release the session
+      if (session) {
+        session.done(); // Release the session back to the pool
+      }
+    }
+  })()
+}
 const logging = (message, line_at, level = 0) => {
   (async () => {
     console.log(message, line_at);
@@ -39,10 +68,9 @@ const logging = (message, line_at, level = 0) => {
           INSERT INTO web_host_running_log
           (level, message, code_line_at)
           VALUES
-          ($[level], $[message], $[code_line_at]);
+          ($[level], $[message], $[line_at]);
         `;
-        t.one(insertQuery, { message, line_at, level })
-
+        t.oneOrNone(insertQuery, { message, line_at, level });
       });
     } catch (error) {
       console.error('Error inserting data:', error);
@@ -68,7 +96,7 @@ function getLineNumberAndFileName() {
   }
   return null;
 }
-module.exports = { db, logging, getLineNumberAndFileName };
+module.exports = { db, logging, access_logging, getLineNumberAndFileName };
 /*
 
 */

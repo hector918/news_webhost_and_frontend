@@ -14,3 +14,17 @@ CREATE TABLE web_host_running_log (
 -- Indices -------------------------------------------------------
 
 CREATE UNIQUE INDEX web_host_running_log_pkey ON web_host_running_log(id int4_ops);
+
+
+CREATE TABLE web_host_access_log (
+    id SERIAL PRIMARY KEY,
+    ip text,
+    create_at timestamp with time zone DEFAULT now(),
+    access_path text,
+    time_lapse text,
+    email text
+);
+
+-- Indices -------------------------------------------------------
+
+CREATE UNIQUE INDEX web_host_access_log_pkey ON web_host_access_log(id int4_ops);

@@ -11,8 +11,8 @@ try {
   var db = pgp(connectionOptions);
   if (db) {
     db.oneOrNone("SET TIME ZONE 'US/Eastern';SELECT current_setting('TIMEZONE') AS current_timezone;")
-      .then(res => console.log("database timezone", res))
-      .catch(error => console.error("error setting timezone", error));
+      .then(res => console.log("database WEB_HOST_DB_URL timezone", res))
+      .catch(error => console.error("WEB_HOST_DB_URL error setting timezone", error));
   }
 } catch (error) {
   console.error("database connection error", error);
