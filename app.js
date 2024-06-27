@@ -87,9 +87,7 @@ app.use('/v1/user', user);
 
 //base route
 app.get('/testing', async (req, res) => {
-  console.log(req.session)
   res.send('Hello, HTTPS world!');
-
 });
 ///404
 app.get('*', (req, res, next) => {

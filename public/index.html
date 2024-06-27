@@ -6,11 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.1/css/bulma.min.css">
   <title>Document</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module">
+    var hashString = window.location.hash;
+    import frame from "./frame.js";
+    import { spa_base } from './content.js';
+    setTimeout(() => {
+      spa_base.render({ "testing": "something" });
+    }, 3000);
+
+  </script>
 </head>
 
 <body>
   <div>
     <h1>hello world</h1>
+
   </div>
 
 </body>

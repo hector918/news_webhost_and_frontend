@@ -73,9 +73,6 @@ user.post('/login', async (req, res) => {
         if (err) {
           // Handle error
           console.error(err);
-          // res.status(500).send('Session save error');
-        } else {
-          // res.send('Session saved');
         }
       });
       return 'Login successful!';

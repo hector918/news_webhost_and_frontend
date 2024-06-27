@@ -1,0 +1,12 @@
+*{
+  transition: all 0.3s;
+}
+html{
+  overflow: hidden;
+  height: 100%;
+}
+body{
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
