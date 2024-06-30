@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+</head>
+
+<body>
+
+</body>
+<script>
+  class textAnimation {
+
+    constructor(parent) {
+      this.parent = parent;
+      this.render();
+      // this.loadStyles(['./pages/landing-page.css']);
+      this.background_animate();
+    }
+
+    loadStyles(styles) {
+      styles.forEach(style => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = style;
+        document.head.appendChild(link);
+      });
+    }
+
+    background_animate() {
+      'use strict';
+
+      const KEYMAP = {
+        '杜甫': 8, '白居易': 9, '辛弃疾': 13, '王勃': 16, '李白': 17, '杜牧': 18, '陆游': 20, '苏轼': 32, '李贺': 33,
+        '李清照': 34, '柳宗元': 35, '杨万里': 36, '岳飞': 37, '范仲淹': 38, '张九龄': 39, '赵匡胤': 40, '秦观': 45,
+        '文天祥': 46, '欧阳修': 48, '陆陇其': 49, '张孜': 50, '朱权': 51, '张嵲': 52, '吕温': 53, '牛希济': 54,
+        '张先': 55, '李翱': 56, '王贞白': 57, '费冠卿': 65, '卫恭': 66, '陈蕃': 67, '黄庭坚': 68, '马戴': 69,
+        '马令': 70, '刘克庄': 71, '陈师道': 72, '张文规': 73, '许洞': 74, '龙应台': 75, '苏洵': 76, '叶清臣': 77,
+        '吕夷简': 78, '张文仲': 79, '杨炯': 80, '张士文': 81, '牛征明': 82, '纪君祥': 83, '韩愈': 84, '刘遵古': 85,
+        '王岩': 86, '黄公度': 87, '张秀才': 88, '傅谏臣': 89, '司马扎': 90, '卢秀才': 112, '朱熹': 113, '刘浚': 114,
+        '张蠙': 115, '傅宿': 116, '牛征明': 117, '刘勰': 118, '朱权': 119, '陆翱': 120, '张文仲': 121, '陈克': 122,
+        '贾仲明': 123, '傅宿': 124, '马戴': 125, '陆翱': 126, '梁启超': 186, '佘太君': 187, '陆翱': 188, '杨亿': 189,
+        '吕夷简': 190, '刘勰': 191, '张蠙': 219, '傅宿': 220, '黄公度': 221, '金圣叹': 222
+      };
+
+      const keyElements = {};
+
+      const init = () => {
+        const a3d = document.querySelector('.a3d');
+        const fragment = document.createDocumentFragment();
+        const limits = [33, 41, 47, 58, 91, 127, 146, 222];
+        const length = limits.length;
+        const unit = 360 / (length + 1);
+        const colors = ["lightgrey", "grey", "darkgrey"];
+
+        for (const poet in KEYMAP) {
+          const rot = document.createElement('div');
+          const key = document.createElement('div');
+
+          key.dataset.name = poet;
+          key.dataset.code = KEYMAP[poet];
+          key.classList.add('key');
+
+          for (let i = 0; i < length; i++) {
+            if (KEYMAP[poet] < limits[i]) {
+              key.style.color = colors[Math.floor(colors.length * Math.random())];
+              break;
+            }
+          }
+
+          rot.classList.add('rot');
+          keyElements[poet] = key;
+          rot.appendChild(key);
+          fragment.appendChild(rot);
+        }
+
+        a3d.appendChild(fragment);
+      };
+
+      init();
+    }
+
+    render() {
+      const body = this.structure();
+      this.parent.append(...body.childNodes);
+    }
+
+    structure() {
+      const parser = new DOMParser();
+      const document = parser.parseFromString(`<div class="a3d" style="position:fixed;"></div>`, "text/html");
+      return document.body;
+    }
+  }
+  const parentElement = document.querySelector('body');
+  const animation = new textAnimation(parentElement);
+</script>
+
+</html>

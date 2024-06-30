@@ -9,11 +9,12 @@
   <link rel="stylesheet" href="./style.css">
   <script type="module">
     var hashString = window.location.hash;
+    console.log(hashString)
     import frame from "./frame.js";
-    import { spa_base } from './content.js';
-    setTimeout(() => {
-      spa_base.render({ "testing": "something" });
-    }, 3000);
+    import { navbar } from './content.js';
+    // setTimeout(() => {
+    //   spa_base.render({ "testing": "something" });
+    // }, 3000);
 
   </script>
 </head>
