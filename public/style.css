@@ -10,3 +10,55 @@ body{
   height: 100%;
   flex-direction: column;
 }
+/* Styles for windows larger than 768px */
+@media (min-width: 769px) {
+  /* Your CSS for large windows */
+  body {
+      background-color: lightblue;
+  }
+  .root_{
+    flex-direction: column;
+  }
+}
+
+/* Styles for windows 768px or smaller */
+@media (max-width: 768px) {
+  /* Your CSS for smaller windows */
+  body {
+      background-color: lightgreen;
+  }
+  .root_{
+    flex-direction: column;
+  }
+}
+
+/* Styles for touchable devices with windows 768px or smaller */
+@media (max-width: 768px) and (pointer: coarse) {
+  /* Your CSS for touchable small windows */
+  body {
+      background-color: lightcoral;
+  }
+  .root_{
+    flex-direction: column-reverse;
+  }
+}
+
+.loading_div_h{
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #14161ae3;
+  z-index: 100;
+  
+}
+.loading_div_h svg{
+    width: 100%;
+    height: 100%;
+    max-width: 100px; 
+}
+.loading_div_h.hidden{
+  visibility: hidden;
+}

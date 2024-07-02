@@ -3,18 +3,32 @@ const compoent_name_prefix = "compoent_name_";
 class elementRootH {
   elementList = {}
   routes = {}
+  currentRoute = "";
   constructor() {
 
   }
-  setRoute(path, document) {
+  setRoute(path, fn) {
     const queryStrings = parseHash(path);
+
     const temp = {};
     let currentPath = temp;
     for (let idx = 0; idx < queryStrings.length; idx++) {
       const itm = queryStrings[idx];
 
       const { path, params } = parseNestedQueryString(itm);
-      if (path === "_") throw new Error("path '_' not allow.");
+      if (path === "") {
+        this.routes = deepMerge(this.routes, { "/": { "_": { params, "function": fn.bind(this) } } })
+      }
+      if (path === "_") {
+        console.error("path '_' not allow.");
+        return;
+      }
+
+      if (path === null) {
+        console.error("in frame setRoute parseNestedQueryString path = null");
+        return;
+      }
+
       currentPath[path] = {
         "_": {
           params,
@@ -23,39 +37,81 @@ class elementRootH {
       };
 
       if (idx === queryStrings.length - 2) {
-        currentPath[path]["_"]['function'] = document;
+        currentPath[path]["_"]['function'] = fn.bind(this);
       }
       currentPath = currentPath[path];
     }
-    this.routes = { ...this.routes, ...temp };
+    this.routes = deepMerge(this.routes, temp);
   }
   goRoute(path) {
+    this.releaseResource(path);
+    if (path === this.currentRoute) return;
     const queryStrings = parseHash(path);
-    const fullRoute = {};
+    this.currentRoute = path;
     let currentPath = this.routes;
+
+
     for (let idx = 0; idx < queryStrings.length; idx++) {
       const itm = queryStrings[idx];
       const { path, params } = parseNestedQueryString(itm);
+      //itm = "" means root route
+      if (queryStrings[0] === "") {
+        try {
+          this.routes['/']['_']['function'](params);
+          return;
+        } catch (error) {
+          console.error(error);
+        }
+      }
 
       currentPath = currentPath[path];
-      if (currentPath['_']['function']) currentPath['_']['function']();
+      try {
+        console.log(this)
+        if (currentPath['_']['function']) {
+          currentPath['_']['function'](params);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+  releaseResource(newRoute) {
+    const findDiffPath = (routeOne, routeTwo) => {
+      const queryStrings = parseHash(routeOne);
+      const currentQueryStrings = parseHash(routeTwo);
 
+
+      if (queryStrings === null || currentQueryStrings === null) return;
+
+      let idx = 0;
+
+      for (let itm of currentQueryStrings) {
+        const { path, params } = parseNestedQueryString(queryStrings[idx]);
+        const { path: currentPath, params: currentParams } = parseNestedQueryString(currentQueryStrings[idx]);
+        //  
+        if (path !== currentPath) return currentPath;
+        idx++;
+      }
     }
 
+    const diffPath = findDiffPath(newRoute, this.currentRoute);
+    if (diffPath) this.del(diffPath);
   }
   add(name, ele) {
     if (!this.has(name)) this.elementList[name] = ele;
   }
   del(name) {
     if (this.has(name)) {
-      const deleteList = this.elementList[name].DOM.querySelectorAll(compoent_name_prefix);
+      const deleteList = this.elementList[name].DOM.querySelectorAll(`[${compoent_name_prefix}]`);
+      console.log(deleteList);
       for (let el of deleteList) {
         const eleName = el.getAttribute(compoent_name_prefix);
         if (this.has(eleName)) {
-          this.has(eleName).destory();
+          this.elementList[eleName].destory();
           delete this.elementList[eleName];
         }
       }
+      this.elementList[name].destory();
       delete this.elementList[name];
     }
   }
@@ -159,7 +215,6 @@ class varH {
     //update compoents
     for (let key in this.updateList) {
       const { component, renderHandle } = this.updateList[key];
-
       if (component && component.renders && component.renders[renderHandle] !== undefined) {
         component.renders[renderHandle](data);
       } else {
@@ -177,17 +232,24 @@ class baseH {
   elements = {}
   renders = {}
 
-  constructor({ name, structure, parent, render }) {
+  constructor({ name, structure, parent, render, events }) {
     if (elementRoot.has(name)) throw "component name already existed.";
     elementRoot.add(name, this);
     this.name = name;
     this.parent = parent;
+    //html
     this.processStructure(structure);
-
+    //render
     for (let itm in render) {
       this.renders[itm] = render[itm].bind(this);
     }
+    //event
+    if (Array.isArray(events)) for (let { target, event, fn } of events) {
 
+      if (this.elements[target] && typeof fn === "function") {
+        this.elements[target].addEventListener(event, fn.bind(this));
+      }
+    }
   }
 
   render(obj) {
@@ -201,11 +263,17 @@ class baseH {
     const dom = parser.parseFromString(structure, "text/html");
     this.DOM = dom.body.firstElementChild;
     const elements = dom.querySelectorAll('[id_]');
-    this.parent.append(this.DOM);
-    this.DOM.setAttribute(compoent_name_prefix, this.name);
-    for (let el of elements) {
-      this.elements[el.getAttribute("id_")] = el;
+    try {
+      this.parent.append(this.DOM);
+      this.DOM.setAttribute(compoent_name_prefix, this.name);
+      for (let el of elements) {
+        this.elements[el.getAttribute("id_")] = el;
+      }
+    } catch (error) {
+      console.error(error, `name = ${this.name}, parent = ${this.parent}`);
     }
+
+
   }
 
   destory() {
@@ -221,6 +289,30 @@ class baseH {
 }
 
 //通用函数//////////////////////////////////////////////////
+function deepMerge(target, source) {
+  if (typeof target !== 'object' || target === null) {
+    return source;
+  }
+
+  if (typeof source !== 'object' || source === null) {
+    return target;
+  }
+
+  for (const key in source) {
+    if (source.hasOwnProperty(key)) {
+      if (typeof source[key] === 'object' && source[key] !== null) {
+        if (!target[key]) {
+          target[key] = Array.isArray(source[key]) ? [] : {};
+        }
+        target[key] = deepMerge(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+}
 // function parseURL(url) {
 //   const result = {};
 
@@ -243,7 +335,7 @@ class baseH {
 //   return result;
 // }
 function parseNestedQueryString(queryString) {
-  if (!queryString) return null;
+  if (!queryString) return { path: null };
   const queryParamsIndex = queryString.indexOf("?");
   if (queryParamsIndex !== -1) {
     const ret = { path: queryString.slice(0, queryParamsIndex), params: {} };

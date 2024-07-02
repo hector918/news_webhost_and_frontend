@@ -11,7 +11,7 @@
     var hashString = window.location.hash;
     console.log(hashString)
     import frame from "./frame.js";
-    import { navbar } from './content.js';
+    import './content.js';
     // setTimeout(() => {
     //   spa_base.render({ "testing": "something" });
     // }, 3000);
@@ -20,11 +20,15 @@
 </head>
 
 <body>
-  <div>
-    <h1>hello world</h1>
-
-  </div>
 
 </body>
+<script defer type="module">
+
+  import frame from "./frame.js";
+  setTimeout(() => {
+    frame.elementRoot.elementList["loading"].DOM.classList.add("hidden");
+
+  }, 500)
+</script>
 
 </html>
