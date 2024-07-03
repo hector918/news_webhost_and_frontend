@@ -108,3 +108,10 @@ function fetch_delete(url, callback) {
       callback({ error: "fetch error" });
     });
 }
+
+////////////////////////////////////////////
+function loadLanguage(language, callback) {
+  fetch_get(`${API}/languages/${language}.json`, callback);
+}
+
+export default { loadLanguage }

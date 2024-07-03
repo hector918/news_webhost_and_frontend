@@ -1,4 +1,5 @@
 const compoent_name_prefix = "compoent_name_";
+const translate_component_key = "translation_";
 //////////////////////////////////////////////////////
 class elementRootH {
   elementList = {}
@@ -198,8 +199,8 @@ class variable {
   updateList = {}
   data = null
 
-  constructor() {
-
+  constructor(defaultVal = undefined) {
+    this.data = defaultVal;
   }
 
   get() {
@@ -221,7 +222,7 @@ class variable {
     }
     return previousData;
   }
-  onChangeCall({ component, renderHandle }) {
+  onChangeCall(component, renderHandle) {
     this.updateList[Object.values(this.updateList).length] = { component, renderHandle };
   }
 }
@@ -453,4 +454,15 @@ function vibrate() {
 }
 //////////
 
-export default { baseComponent, variable, LinkedListQueue, elementRoot, throttle, handleSwipe }
+export default {
+  //class
+  baseComponent,
+  variable,
+  LinkedListQueue,
+  //function
+  throttle,
+  handleSwipe,
+  //variable
+  elementRoot,
+  translate_component_key
+}

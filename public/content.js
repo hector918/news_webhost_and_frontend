@@ -1,11 +1,22 @@
 import frame from './frame.js';
+import srv from './fetch_.js';
 const elementRoot = frame.elementRoot;
+
 new frame.baseComponent({
   name: "root",
   structure: `
     <div class="is-flex root_ is-flex-grow-1" id_="root_div"></div>
   `,
   parent: document.querySelector("body"),
+  render: {
+    "changeLanguage": function (obj) {
+      const nodeList = this.elements["root_div"].querySelectorAll(`[${frame.translate_component_key}]`);
+      for (let node of nodeList) {
+        const key = node.getAttribute(frame.translate_component_key);
+        node.innerHTML = obj[key] || key;
+      }
+    }
+  }
 });
 //0	1	1	2	3	5	8	13	21	34	55
 new frame.baseComponent({
@@ -59,9 +70,20 @@ new frame.baseComponent({
 
       </a>
       <div class="navbar-item is-justify-content-space-around is-flex-grow-1">
-        <a class="navbar-item" id_="button-1">testing</a>
-        <a class="navbar-item" id_="button-2">testing</a>
-        <a class="navbar-item" id_="button-3">testing</a>
+        <a 
+          class="navbar-item" 
+          id_="button-1" 
+          ${frame.translate_component_key}="news"
+        >testing</a>
+        <a 
+          class="navbar-item" 
+          id_="button-2"
+          ${frame.translate_component_key}="profile"
+        >testing</a>
+        <a 
+          class="navbar-item" 
+          id_="button-3"${frame.translate_component_key}="news"
+        >testing</a>
         <a class="navbar-item" id_="button-4">testing</a>
         
       </div>
@@ -90,12 +112,6 @@ new frame.baseComponent({
 
 });
 
-// elementRoot.setRoute(
-//   "/",
-//   () => {
-
-//   }
-// )
 
 elementRoot.setRoute("/?testing=true", (params) => {
   new frame.baseComponent({
@@ -113,7 +129,7 @@ elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk"
   });
   const kkk = new frame.baseComponent({
     name: "kkk",
-    structure: `<div id_="kkk">wohoo</div>`,
+    structure: `<div id_="kkk" ${frame.translate_component_key}="testing">wohoo</div>`,
     parent: gameIndex.elements["game.index"],
   });
 }));
@@ -158,18 +174,26 @@ elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
 elementRoot.goRoute("/");
 
 const variablePool = {};
-variablePool.user_info = new frame.variable();
-variablePool.user_info.onChangeCall({ component: elementRoot.get("navbar"), renderHandle: "testing" });
+variablePool.user_info = new frame.variable("hello");
+variablePool.user_info.onChangeCall(elementRoot.get("navbar"), "testing");
 
-variablePool.user_info.set("hello world");
+variablePool.languageSet = new frame.variable({});
+variablePool.languageSet.onChangeCall(elementRoot.get("root"), "changeLanguage");
+srv.loadLanguage("simplify-chinese", (data, statusCode) => {
+  if (statusCode === 200) {
+    variablePool.languageSet.set(data);
+  }
+
+});
 
 
+//test code
 setTimeout(() => {
-  variablePool.user_info.set("fuck world");
-
+  variablePool.user_info.set("world");
 }, (2000));
-export { }
 
+
+export { }
 //event
 
 window.addEventListener('resize', frame.throttle(function (event) {
