@@ -50,7 +50,6 @@ class elementRootH {
     this.currentRoute = path;
     let currentPath = this.routes;
 
-
     for (let idx = 0; idx < queryStrings.length; idx++) {
       const itm = queryStrings[idx];
       const { path, params } = parseNestedQueryString(itm);
@@ -66,7 +65,6 @@ class elementRootH {
 
       currentPath = currentPath[path];
       try {
-        console.log(this)
         if (currentPath['_']['function']) {
           currentPath['_']['function'](params);
         }
@@ -196,7 +194,7 @@ class LinkedListQueue {
   }
 }
 //////////////////////////////////////////////////////
-class varH {
+class variable {
   updateList = {}
   data = null
 
@@ -227,18 +225,27 @@ class varH {
     this.updateList[Object.values(this.updateList).length] = { component, renderHandle };
   }
 }
-//////////////////////////////////////////////////////
-class baseH {
+
+
+
+//////Hector Jun 1////////////////////////////////
+class baseComponent {
   elements = {}
   renders = {}
 
-  constructor({ name, structure, parent, render, events }) {
+  constructor({ name, structure, parent, render, events, variable }) {
     if (elementRoot.has(name)) throw "component name already existed.";
     elementRoot.add(name, this);
     this.name = name;
     this.parent = parent;
     //html
     this.processStructure(structure);
+    //variable
+    for (let key in variable) {
+      if (!Object.hasOwnProperty(key)) {
+        this[key] = variable[key];
+      }
+    }
     //render
     for (let itm in render) {
       this.renders[itm] = render[itm].bind(this);
@@ -250,6 +257,7 @@ class baseH {
         this.elements[target].addEventListener(event, fn.bind(this));
       }
     }
+
   }
 
   render(obj) {
@@ -272,8 +280,6 @@ class baseH {
     } catch (error) {
       console.error(error, `name = ${this.name}, parent = ${this.parent}`);
     }
-
-
   }
 
   destory() {
@@ -313,27 +319,32 @@ function deepMerge(target, source) {
 
   return target;
 }
-// function parseURL(url) {
-//   const result = {};
+function handleSwipe({ touchstartX, touchstartY, touchendX, touchendY }, swipeArea) {
+  if (!isTouchDevice()) return;
+  const diffX = touchendX - touchstartX;
+  const diffY = touchendY - touchstartY;
 
-//   try {
-//     const urlObj = new URL(url);
-//     result.protocol = urlObj.protocol;
-//     result.hostname = urlObj.hostname;
-//     result.port = urlObj.port;
-//     result.pathname = urlObj.pathname;
-//     result.search = urlObj.search;
-//     result.hash = parseHash(urlObj.hash);
-//     result.username = urlObj.username;
-//     result.password = urlObj.password;
-//     result.origin = urlObj.origin;
-//     result.host = urlObj.host;
-//   } catch (error) {
-//     throw new Error('Invalid URL');
-//   }
+  if (Math.abs(diffX) > Math.abs(diffY)) {
+    // Horizontal swipe
+    if (diffX > 0) {
+      console.log('Swiped right');
+      swipeArea.textContent = 'Swiped Right';
+    } else {
+      console.log('Swiped left');
+      swipeArea.textContent = 'Swiped Left';
+    }
+  } else {
+    // Vertical swipe
+    if (diffY > 0) {
+      console.log('Swiped down');
+      swipeArea.textContent = 'Swiped Down';
+    } else {
+      console.log('Swiped up');
+      swipeArea.textContent = 'Swiped Up';
+    }
+  }
+}
 
-//   return result;
-// }
 function parseNestedQueryString(queryString) {
   if (!queryString) return { path: null };
   const queryParamsIndex = queryString.indexOf("?");
@@ -421,12 +432,13 @@ function _runTask(task, callback) {
     }
   })
 }
+function isTouchDevice() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+}
 //////////测试是否touchable device
 window.onload = function () {
   const infoDiv = document.getElementById('body');
-  function isTouchDevice() {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-  }
+
   if (isTouchDevice()) {
     console.log("This device is touch-enabled.");
   } else {
@@ -441,4 +453,4 @@ function vibrate() {
 }
 //////////
 
-export default { baseH, varH, LinkedListQueue, elementRoot, throttle }
+export default { baseComponent, variable, LinkedListQueue, elementRoot, throttle, handleSwipe }

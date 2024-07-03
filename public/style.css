@@ -41,6 +41,11 @@ body{
   .root_{
     flex-direction: column-reverse;
   }
+  .swipe_panel{
+    background-color: beige;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .loading_div_h{

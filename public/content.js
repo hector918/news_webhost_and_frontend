@@ -1,6 +1,6 @@
 import frame from './frame.js';
 const elementRoot = frame.elementRoot;
-new frame.baseH({
+new frame.baseComponent({
   name: "root",
   structure: `
     <div class="is-flex root_ is-flex-grow-1" id_="root_div"></div>
@@ -8,7 +8,7 @@ new frame.baseH({
   parent: document.querySelector("body"),
 });
 //0	1	1	2	3	5	8	13	21	34	55
-new frame.baseH({
+new frame.baseComponent({
   name: "loading",
   structure: `
     <div class="loading_div_h" id_="loading_div_h">
@@ -46,7 +46,7 @@ new frame.baseH({
 });
 
 //
-new frame.baseH({
+new frame.baseComponent({
   name: "navbar",
   structure: `
     <nav class="navbar is-link navbar_ " role="navigation" aria-label="main navigation">
@@ -98,7 +98,7 @@ new frame.baseH({
 // )
 
 elementRoot.setRoute("/?testing=true", (params) => {
-  new frame.baseH({
+  new frame.baseComponent({
     name: "mainPanel",
     structure: `<div class="is-flex-grow-1" id_="main_panel">testing</div>`,
     parent: elementRoot.elementList["root"].elements["root_div"],
@@ -106,12 +106,12 @@ elementRoot.setRoute("/?testing=true", (params) => {
 });
 
 elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk", (function (params) {
-  const gameIndex = new frame.baseH({
+  const gameIndex = new frame.baseComponent({
     name: "game.index",
     structure: `<div id_="game.index">game.index</div>`,
     parent: this.elementList["mainPanel"].elements['main_panel'],
   });
-  const kkk = new frame.baseH({
+  const kkk = new frame.baseComponent({
     name: "kkk",
     structure: `<div id_="kkk">wohoo</div>`,
     parent: gameIndex.elements["game.index"],
@@ -119,12 +119,36 @@ elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk"
 }));
 
 elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
-  const newsIndex = new frame.baseH({
+  const newsIndex = new frame.baseComponent({
     name: "news.index",
-    structure: `<div id_="news.index">news.index</div>`,
+    structure: `<div class="swipe_panel" id_="swipe_panel">
+      <div id_="news.index">news.index</div>
+    </div>
+    `,
     parent: this.elementList["mainPanel"].elements['main_panel'],
+    events: [
+      {
+        "target": "swipe_panel", "event": "touchstart", "fn": function (event) {
+          this.touchstartX = event.changedTouches[0].screenX;
+          this.touchstartY = event.changedTouches[0].screenY;
+        }
+      },
+      {
+        "target": "swipe_panel", "event": "touchend", "fn": function (event) {
+          this.touchendX = event.changedTouches[0].screenX;
+          this.touchendY = event.changedTouches[0].screenY;
+          frame.handleSwipe({ touchstartX: this.touchstartX, touchstartY: this.touchstartY, touchendX: this.touchendX, touchendY: this.touchendY }, this.elements['swipe_panel']);
+        }
+      }
+    ],
+    variable: {
+      touchstartX: 0,
+      touchstartY: 0,
+      touchendX: 0,
+      touchendY: 0
+    }
   });
-  const kkk = new frame.baseH({
+  const kkk = new frame.baseComponent({
     name: "kkk",
     structure: `<div id_="kkk">kkk</div>`,
     parent: newsIndex.elements["news.index"],
@@ -133,11 +157,17 @@ elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
 
 elementRoot.goRoute("/");
 
-const user_info = new frame.varH();
-user_info.onChangeCall({ component: elementRoot.get("navbar"), renderHandle: "testing" });
+const variablePool = {};
+variablePool.user_info = new frame.variable();
+variablePool.user_info.onChangeCall({ component: elementRoot.get("navbar"), renderHandle: "testing" });
 
-user_info.set("hello world");
+variablePool.user_info.set("hello world");
 
+
+setTimeout(() => {
+  variablePool.user_info.set("fuck world");
+
+}, (2000));
 export { }
 
 //event
