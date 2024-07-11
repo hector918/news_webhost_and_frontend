@@ -16,6 +16,12 @@ this is the first part of the project, handled reading from the news sources and
 - \*\*The red one is this repository; the others are set to private. Contact me for more information.
   ![image](flowchart.jpg)
 
+  #scrape queue
+  ![image](scrape_queue.svg)
+
+  #extract key infomation queue
+  ![image](key_info.svg)
+
 ### Technologies and Tools
 
 - **AI and Machine Learning**:

@@ -84,6 +84,7 @@ app.get('/files', (req, res) => {
 
 //controller route
 app.use('/v1/user', user);
+app.use('/v1/news', require('./controllers/news-display').news);
 
 //base route
 app.get('/testing', async (req, res) => {
