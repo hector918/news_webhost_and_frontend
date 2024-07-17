@@ -45,7 +45,7 @@ if (cluster.isMaster) {
     ].join(':'),
     honorCipherOrder: true,
   };
-  https.createServer(options, app).listen(process.env.WEB_PORT || 8443, () => {
-    console.log(`Worker ${process.pid} started`);
+  https.createServer(options, app).listen(process.env.WEB_PORT || 8443, '0.0.0.0', () => {
+    console.log(`Worker ${process.pid} started on port: ${process.env.WEB_PORT || 8443}`);
   });
 }
