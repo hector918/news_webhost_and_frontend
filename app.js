@@ -12,6 +12,7 @@ const { user } = require('./controllers/user-control');
 const { logging, access_logging } = require('./db/logging');
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 //////////////////////////////////////////////////////
+app.set('trust proxy', 1);
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 100
