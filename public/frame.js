@@ -234,13 +234,18 @@ class baseComponent {
   elements = {}
   renders = {}
 
-  constructor({ name, structure, parent, render, events, variable }) {
+  constructor({ name, structure, parent, render, events, variable, fromElementId }) {
     if (elementRoot.has(name)) throw "component name already existed.";
     elementRoot.add(name, this);
     this.name = name;
     this.parent = parent;
     //html
-    this.processStructure(structure);
+    if (fromElementId !== undefined) {
+      this.DOM = document.querySelector("#" + fromElementId)
+    } else {
+      this.processStructure(structure);
+    }
+
     //variable
     for (let key in variable) {
       if (!Object.hasOwnProperty(key)) {
@@ -258,7 +263,6 @@ class baseComponent {
         this.elements[target].addEventListener(event, fn.bind(this));
       }
     }
-
   }
 
   render(obj) {

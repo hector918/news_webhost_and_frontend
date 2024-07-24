@@ -21,38 +21,7 @@ new frame.baseComponent({
 //0	1	1	2	3	5	8	13	21	34	55
 new frame.baseComponent({
   name: "loading",
-  structure: `
-    <div class="loading_div_h" id_="loading_div_h">
-      <svg width="100px" version="1.1" xmlns="http://www.w3.org/2000/svg"
-        xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 0 0"
-        xml:space="preserve">
-        <rect x="20" y="50" width="4" height="10" fill="#fff">
-          <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-            begin="0.1" dur="0.6s" repeatCount="indefinite"></animateTransform>
-        </rect>
-        <rect x="30" y="50" width="4" height="10" fill="#fff">
-          <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-            begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform>
-        </rect>
-        <rect x="40" y="50" width="4" height="10" fill="#fff">
-          <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-            begin="0.3s" dur="0.6s" repeatCount="indefinite"></animateTransform>
-        </rect>
-        <rect x="50" y="50" width="4" height="10" fill="#fff">
-          <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-            begin="0.5" dur="0.6s" repeatCount="indefinite"></animateTransform>
-        </rect>
-        <rect x="60" y="50" width="4" height="10" fill="#fff">
-          <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-            begin="0.8s" dur="0.6s" repeatCount="indefinite"></animateTransform>
-        </rect>
-        <rect x="70" y="50" width="4" height="10" fill="#fff">
-          <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-            begin="1.3s" dur="0.6s" repeatCount="indefinite"></animateTransform>
-        </rect>
-      </svg>
-    </div>
-  `,
+  fromElementId: "loading_div_h",
   parent: document.querySelector("body"),
 });
 

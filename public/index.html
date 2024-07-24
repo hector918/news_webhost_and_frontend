@@ -5,30 +5,86 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.1/css/bulma.min.css">
-  <title>Document</title>
+  <title>Hyper-Global Press Observatory</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="module">
-    var hashString = window.location.hash;
-    console.log(hashString)
-    import frame from "./frame.js";
-    import './content.js';
-    // setTimeout(() => {
-    //   spa_base.render({ "testing": "something" });
-    // }, 3000);
+  <style>
+    .loading_div_h {
+      position: fixed;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #14161ae3;
+      z-index: 100;
+      flex-direction: column;
+    }
 
-  </script>
+    .loading_div_h svg {
+      width: 100%;
+      max-width: 100px;
+    }
+
+    .loading_div_h h4 {
+      font-size: x-large;
+      color: blueviolet;
+    }
+
+    .loading_div_h.hidden {
+      visibility: hidden;
+    }
+  </style>
 </head>
 
 <body>
-
+  <div class="loading_div_h" id="loading_div_h">
+    <h4>Hygpo</h4>
+    <svg width="100px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+      x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
+      <rect x="20" y="50" width="4" height="10" fill="#fff">
+        <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+          begin="0.1" dur="0.6s" repeatCount="indefinite"></animateTransform>
+      </rect>
+      <rect x="30" y="50" width="4" height="10" fill="#fff">
+        <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+          begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform>
+      </rect>
+      <rect x="40" y="50" width="4" height="10" fill="#fff">
+        <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+          begin="0.3s" dur="0.6s" repeatCount="indefinite"></animateTransform>
+      </rect>
+      <rect x="50" y="50" width="4" height="10" fill="#fff">
+        <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+          begin="0.5" dur="0.6s" repeatCount="indefinite"></animateTransform>
+      </rect>
+      <rect x="60" y="50" width="4" height="10" fill="#fff">
+        <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+          begin="0.8s" dur="0.6s" repeatCount="indefinite"></animateTransform>
+      </rect>
+      <rect x="70" y="50" width="4" height="10" fill="#fff">
+        <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+          begin="1.3s" dur="0.6s" repeatCount="indefinite"></animateTransform>
+      </rect>
+    </svg>
+  </div>
 </body>
 <script defer type="module">
 
   import frame from "./frame.js";
-  setTimeout(() => {
-    frame.elementRoot.elementList["loading"].DOM.classList.add("hidden");
+  window.onload = () => {
+    setTimeout(() => {
+      console.log(frame.elementRoot.elementList["loading"])
+      frame.elementRoot.elementList["loading"].DOM.classList.add("hidden");
+    }, 500)
+  }
 
-  }, 500)
+</script>
+<script type="module">
+  var hashString = window.location.hash;
+  console.log(hashString)
+  import frame from "./frame.js";
+  import './content.js';
+
 </script>
 
 </html>
