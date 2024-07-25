@@ -7,6 +7,10 @@ let default_fetch_options = {
 function error_handle(error) {
   console.error(error);
 }
+//attach with post
+const attachment = {
+  userActivity: []
+}
 ///////////////////////////////////////////
 function fetch_patch(url, fetchOptions, callback) {
   fetch_post(url, fetchOptions, callback, 'PATCH');
@@ -15,11 +19,23 @@ function fetch_put(url, fetchOptions, callback) {
   fetch_post(url, fetchOptions, callback, 'PUT');
 }
 function fetch_post(url, fetchOptions, callback, method = 'POST') {
-
   fetchOptions.method = method;
+  const copyAttachment = {};
+  for (let key in attachment) {
+    if (Array.isArray(attachment[key])) {
+      copyAttachment[key] = [];
+      while (attachment[key].length > 0) {
+        copyAttachment[key].push(attachment[key].pop());
+      }
+      fetchOptions.body[key] = copyAttachment[key];
+    }
+  }
+
+  fetchOptions.body = JSON.stringify(fetchOptions.body);
+  console.log(fetchOptions)
   fetchOptions.headers = {
     ...default_fetch_options,
-    ...fetchOptions.headers
+    ...fetchOptions.headers,
   }
   if (fetchOptions.headers['Content-Type'] === "delete")
     delete fetchOptions.headers['Content-Type'];
@@ -32,6 +48,13 @@ function fetch_post(url, fetchOptions, callback, method = 'POST') {
     })
     .catch(error => {
       error_handle(error);
+      for (let key in copyAttachment) {
+        if (Array.isArray(copyAttachment[key])) {
+          while (attachment[key].length > 0) {
+            attachment[key].push(copyAttachment[key].pop());
+          }
+        }
+      }
       callback(error);
     });
 }
@@ -114,4 +137,8 @@ function loadLanguage(language, callback) {
   fetch_get(`${API}/languages/${language}.json`, callback);
 }
 
-export default { loadLanguage }
+function testPost(body, callback) {
+  fetch_post(`${API}/v1/testing`, { body }, callback);
+}
+
+export default { attachment, loadLanguage, testPost }

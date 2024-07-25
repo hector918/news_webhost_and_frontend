@@ -1,6 +1,8 @@
 import frame from './frame.js';
 import srv from './fetch_.js';
+import ls from './localStorage.js'
 const elementRoot = frame.elementRoot;
+srv.attachment.userActivity = elementRoot.attachToPost;
 
 new frame.baseComponent({
   name: "root",
@@ -51,7 +53,7 @@ new frame.baseComponent({
         >testing</a>
         <a 
           class="navbar-item" 
-          id_="button-3"${frame.translate_component_key}="news"
+          id_="button-3"${frame.translate_component_key}="testing"
         >testing</a>
         <a class="navbar-item" id_="button-4">testing</a>
         
@@ -76,7 +78,15 @@ new frame.baseComponent({
       target: "button-2", event: "click", fn: (evt) => {
         elementRoot.goRoute("/mainPanel/news.index/kkk");
       }
-    }
+    },
+    {
+      target: "button-3", event: "click", fn: (evt) => {
+        srv.testPost({ testing: "hello world" }, (data, code) => {
+          console.log(data, code);
+        })
+      }
+    },
+
   ]
 
 });
@@ -152,9 +162,7 @@ srv.loadLanguage("simplify-chinese", (data, statusCode) => {
   if (statusCode === 200) {
     variablePool.languageSet.set(data);
   }
-
 });
-
 
 //test code
 setTimeout(() => {

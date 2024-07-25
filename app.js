@@ -38,6 +38,7 @@ app.use(session({
   }
 }));
 // Body parser
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 /////////////////////////
 // Serve static files from the "public" directory
@@ -86,7 +87,7 @@ app.get('/files', (req, res) => {
 //controller route
 app.use('/v1/user', user);
 app.use('/v1/news', require('./controllers/news-display').news);
-
+app.use('/v1/testing', require('./controllers/test').test);
 //base route
 app.get('/testing', async (req, res) => {
   res.send('Hello, HTTPS world!');

@@ -26,8 +26,9 @@
     }
 
     .loading_div_h h4 {
-      font-size: x-large;
-      color: blueviolet;
+      font-size: xx-large;
+      color: rgba(238, 130, 238, 0.511);
+      font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     }
 
     .loading_div_h.hidden {
@@ -38,7 +39,7 @@
 
 <body>
   <div class="loading_div_h" id="loading_div_h">
-    <h4>Hygpo</h4>
+    <h4 class="typing">Hygpo</h4>
     <svg width="100px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
       x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
       <rect x="20" y="50" width="4" height="10" fill="#fff">
@@ -71,20 +72,25 @@
 <script defer type="module">
 
   import frame from "./frame.js";
+  //Triggered When: The entire page, including all dependent resources like images, scripts, and stylesheets, have fully loaded.
   window.onload = () => {
     setTimeout(() => {
-      console.log(frame.elementRoot.elementList["loading"])
       frame.elementRoot.elementList["loading"].DOM.classList.add("hidden");
-    }, 500)
+    }, 500);
   }
-
 </script>
 <script type="module">
   var hashString = window.location.hash;
   console.log(hashString)
   import frame from "./frame.js";
   import './content.js';
+  //Triggered When: The initial HTML document has been completely loaded and parsed, without waiting for stylesheets, images, and subframes to finish loading.
+  document.addEventListener('DOMContentLoaded', () => {
+    // console.log(tracker)
+    // tracker.trackPageView();
 
+    // ... 其他事件监听保持不变 ...
+  });
 </script>
 
 </html>

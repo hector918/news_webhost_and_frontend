@@ -1,12 +1,81 @@
 const compoent_name_prefix = "compoent_name_";
 const translate_component_key = "translation_";
 //////////////////////////////////////////////////////
+class UserEvent {
+  constructor(type, category, action, label, value) {
+    this.timestamp = new Date().toISOString();
+    this.type = type;
+    this.category = category;
+    this.action = action;
+    this.label = label;
+    this.value = value;
+    // this.sessionId = getSessionId(); // 实现这个函数来获取会话ID
+    // this.userId = getUserId(); // 实现这个函数来获取用户ID
+    this.pageUrl = window.location.href;
+    this.userAgent = navigator.userAgent;
+  }
+}
+
+class UserActivityTracker {
+  constructor() {
+    this.events = [];
+    this.pageViewStartTime = new Date();
+    this.currentPageUrl = window.location.href;
+  }
+
+  trackEvent(type, category, action, label = null, value = null) {
+    const event = new UserEvent(type, category, action, label, value);
+    this.events.push(event);
+  }
+
+  trackPageView() {
+    // 如果这不是首次加载，先记录上一个页面的停留时间
+    if (this.pageViewStartTime) {
+      this.trackPageDuration();
+    }
+
+    // 记录新的页面访问
+    this.pageViewStartTime = new Date();
+    this.currentPageUrl = window.location.href;
+    this.trackEvent('pageview', 'engagement', 'view', window.location.pathname);
+  }
+
+  trackPageDuration() {
+    const endTime = new Date();
+    const duration = (endTime - this.pageViewStartTime) / 1000; // 转换为秒
+    this.trackEvent('pageduration', 'engagement', 'time_on_page', this.currentPageUrl, duration);
+  }
+
+  // sendEvents() {
+  //   // 在发送事件之前，先记录当前页面的停留时间
+  //   this.trackPageDuration();
+
+  //   if (this.events.length === 0) return;
+
+  //   fetch('/api/user-activities', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify(this.events)
+  //   })
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       console.log('Events sent successfully:', data);
+  //       this.events = []; // 清空已发送的事件
+  //     })
+  //     .catch(error => console.error('Error sending events:', error));
+  // }
+}
+
+////////////////////////
 class elementRootH {
   elementList = {}
   routes = {}
   currentRoute = "";
   constructor() {
-
+    this.tracker = new UserActivityTracker()
+    this.attachToPost = this.tracker.events;
   }
   setRoute(path, fn) {
     const queryStrings = parseHash(path);
@@ -45,6 +114,7 @@ class elementRootH {
     this.routes = deepMerge(this.routes, temp);
   }
   goRoute(path) {
+
     this.releaseResource(path);
     if (path === this.currentRoute) return;
     const queryStrings = parseHash(path);
@@ -73,6 +143,7 @@ class elementRootH {
         console.error(error);
       }
     }
+    this.tracker.trackPageView();
   }
   releaseResource(newRoute) {
     const findDiffPath = (routeOne, routeTwo) => {
@@ -463,6 +534,7 @@ export default {
   baseComponent,
   variable,
   LinkedListQueue,
+  UserActivityTracker,
   //function
   throttle,
   handleSwipe,
