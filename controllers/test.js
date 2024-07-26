@@ -10,5 +10,11 @@ test.post("/", async (req, res) => {
   })
 })
 
+test.get("/", async (req, res) => {
+  await req.common_wrapper(async () => {
+    return 'Hello world!';
+  })
+})
+
 module.exports = { test };
 

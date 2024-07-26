@@ -20,7 +20,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 const corsOptions = {
-  // origin: 'https://trusteddomain.com',
+  // origin: 'https://hygpo.com',
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
@@ -79,7 +79,6 @@ app.use((req, res, next) => {
   }
 });
 
-
 app.use('/public/secret', (req, res, next) => {
   res.status(403).send('Forbidden');
 });
@@ -92,10 +91,6 @@ app.get('/files', (req, res) => {
 app.use('/v1/user', user);
 app.use('/v1/news', require('./controllers/news-display').news);
 app.use('/v1/testing', require('./controllers/test').test);
-//base route
-app.get('/testing', async (req, res) => {
-  res.send('Hello, HTTPS world!');
-});
 ///404
 app.get('*', (req, res, next) => {
   if (!res.headersSent) {
