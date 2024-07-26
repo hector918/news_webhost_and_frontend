@@ -141,4 +141,8 @@ function testPost(body, callback) {
   fetch_post(`${API}/v1/testing`, { body }, callback);
 }
 
-export default { attachment, loadLanguage, testPost }
+function pageUnloadEvent(body, callback) {
+  fetch_post(`${API}/v1/testing`, { body }, callback);
+}
+
+export default { attachment, loadLanguage, pageUnloadEvent, testPost }

@@ -292,8 +292,6 @@ class variable {
   }
 }
 
-
-
 //////Hector Jun 1////////////////////////////////
 class baseComponent {
   elements = {}

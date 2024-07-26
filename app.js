@@ -10,6 +10,7 @@ const RedisStore = require("connect-redis").default
 const { session_redis } = require('./db/session-redis');
 const { user } = require('./controllers/user-control');
 const { logging, access_logging } = require('./db/logging');
+const { process_user_telemetry } = require('./controllers/user-telemetry');
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 //////////////////////////////////////////////////////
 app.set('trust proxy', 1);
@@ -56,7 +57,6 @@ app.use((req, res, next) => {
     //   }
     // }
     const start_time = new Date().getTime();
-
     next();
     const lapse = new Date().getTime() - start_time;
     const ip = req !== undefined ? `${req.socket?.remoteAddress}:${req.socket?.remotePort}` : undefined;
@@ -64,6 +64,10 @@ app.use((req, res, next) => {
     access_logging(ip, url, req.session?.user_info?.email, lapse);
 
   });
+  //user telemetry entry
+  if (req.body.userActivity) {
+    process_user_telemetry(req.body.userActivity);
+  }
   //此处暂时没有作用
   process.send({ 'query_user_info': "email" });
   req.common_wrapper = async (fn) => {

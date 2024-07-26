@@ -86,14 +86,11 @@ new frame.baseComponent({
         })
       }
     },
-
   ]
-
 });
 
 
 elementRoot.setRoute("/?testing=true", (params) => {
-  console.log(params)
   new frame.baseComponent({
     name: "mainPanel",
     structure: `<div class="is-flex-grow-1" id_="main_panel">testing</div>`,
@@ -189,6 +186,7 @@ window.addEventListener("beforeunload", function (e) {
 
   var confirmationMessage = 'It looks like you leaving. Are you sure? ';
   (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+  srv.pageUnloadEvent({},);
   return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
 
 });
