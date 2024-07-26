@@ -93,6 +93,7 @@ new frame.baseComponent({
 
 
 elementRoot.setRoute("/?testing=true", (params) => {
+  console.log(params)
   new frame.baseComponent({
     name: "mainPanel",
     structure: `<div class="is-flex-grow-1" id_="main_panel">testing</div>`,
@@ -101,6 +102,7 @@ elementRoot.setRoute("/?testing=true", (params) => {
 });
 
 elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk", (function (params) {
+
   const gameIndex = new frame.baseComponent({
     name: "game.index",
     structure: `<div id_="game.index">game.index</div>`,
@@ -114,6 +116,11 @@ elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk"
 }));
 
 elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
+  new frame.baseComponent({
+    name: "mainPanel",
+    structure: `<div class="is-flex-grow-1" id_="main_panel">testing</div>`,
+    parent: elementRoot.elementList["root"].elements["root_div"],
+  });
   const newsIndex = new frame.baseComponent({
     name: "news.index",
     structure: `<div class="swipe_panel" id_="swipe_panel">

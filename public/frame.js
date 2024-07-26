@@ -77,93 +77,87 @@ class elementRootH {
     this.tracker = new UserActivityTracker()
     this.attachToPost = this.tracker.events;
   }
+
   setRoute(path, fn) {
-    const queryStrings = parseHash(path);
-
-    const temp = {};
-    let currentPath = temp;
-    for (let idx = 0; idx < queryStrings.length; idx++) {
-      const itm = queryStrings[idx];
-
-      const { path, params } = parseNestedQueryString(itm);
-      if (path === "") {
-        this.routes = deepMerge(this.routes, { "/": { "_": { params, "function": fn.bind(this) } } })
+    //从子路径中改变父路径的元素属性，必须由子元素调用父元素函数
+    /* this.routes 的结构例子
+    {
+      "mainPanel": {
+        "@": { "params": {},"next": {} },
+        "game.index": {
+          "@": { "params": {}, "next": {} }
+        },
+        "news.index": {
+          "@": { "params": {}, "next": {} },
+          "kkk": { "@": { "params": {}, "next": {} }
+          }
+        }
       }
-      if (path === "_") {
-        console.error("path '_' not allow.");
-        return;
-      }
-
-      if (path === null) {
-        console.error("in frame setRoute parseNestedQueryString path = null");
-        return;
-      }
-
-      currentPath[path] = {
-        "_": {
+    }
+    */
+    const route = {};
+    let currentPath = route;
+    const { subPaths, params } = url_hash_spliter(path);
+    for (let pathStep of subPaths) {
+      currentPath[pathStep] = {
+        "@": {
           params,
           next: {}
         }
-      };
-
-      if (idx === queryStrings.length - 2) {
-        currentPath[path]["_"]['function'] = fn.bind(this);
       }
-      currentPath = currentPath[path];
+      switch (pathStep) {
+        case "@": {
+          console.warn("path '@' not allow.");
+          return;
+        }
+        case subPaths[subPaths.length - 1]: {
+          //if reach last element 
+          currentPath[pathStep]['@']['function'] = fn.bind(this);
+          break;
+        }
+      }
+      currentPath = currentPath[pathStep];
     }
-    this.routes = deepMerge(this.routes, temp);
+    this.routes = deepMerge(this.routes, route);
   }
   goRoute(path) {
 
     this.releaseResource(path);
     if (path === this.currentRoute) return;
-    const queryStrings = parseHash(path);
     this.currentRoute = path;
     let currentPath = this.routes;
+    const { subPaths, params } = url_hash_spliter(path);
+    for (let pathStep of subPaths) {
 
-    for (let idx = 0; idx < queryStrings.length; idx++) {
-      const itm = queryStrings[idx];
-      const { path, params } = parseNestedQueryString(itm);
-      //itm = "" means root route
-      if (queryStrings[0] === "") {
-        try {
-          this.routes['/']['_']['function'](params);
-          return;
-        } catch (error) {
-          console.error(error);
-        }
-      }
+      if (currentPath[pathStep] === undefined) {
 
-      currentPath = currentPath[path];
-      try {
-        if (currentPath['_']['function']) {
-          currentPath['_']['function'](params);
-        }
-      } catch (error) {
-        console.error(error);
+        console.error(`${path} not found.`);
       }
+      checkAndRun(currentPath[pathStep]['@']['function'], params);
+      currentPath = currentPath[pathStep];
     }
+    window.location.hash = `#${path}`;
     this.tracker.trackPageView();
+    ///////////////////////////
+    function checkAndRun(fn, param) {
+      if (fn) if (typeof (fn) === "function") {
+        fn(param);
+        return true;
+      }
+      return false;
+    }
   }
   releaseResource(newRoute) {
+    ///////////////////////////
     const findDiffPath = (routeOne, routeTwo) => {
-      const queryStrings = parseHash(routeOne);
-      const currentQueryStrings = parseHash(routeTwo);
-
-
-      if (queryStrings === null || currentQueryStrings === null) return;
-
-      let idx = 0;
-
-      for (let itm of currentQueryStrings) {
-        const { path, params } = parseNestedQueryString(queryStrings[idx]);
-        const { path: currentPath, params: currentParams } = parseNestedQueryString(currentQueryStrings[idx]);
-        //  
-        if (path !== currentPath) return currentPath;
-        idx++;
+      const { subPaths: targetPath } = url_hash_spliter(routeOne);
+      const { subPaths: currentPath } = url_hash_spliter(routeTwo);
+      for (let idx = 0; idx < currentPath.length; idx++) {
+        if (currentPath[idx] !== targetPath[idx]) return currentPath[idx];
       }
+      return false;
     }
-
+    ////////////////////////////////
     const diffPath = findDiffPath(newRoute, this.currentRoute);
     if (diffPath) this.del(diffPath);
   }
@@ -171,9 +165,9 @@ class elementRootH {
     if (!this.has(name)) this.elementList[name] = ele;
   }
   del(name) {
+
     if (this.has(name)) {
       const deleteList = this.elementList[name].DOM.querySelectorAll(`[${compoent_name_prefix}]`);
-      console.log(deleteList);
       for (let el of deleteList) {
         const eleName = el.getAttribute(compoent_name_prefix);
         if (this.has(eleName)) {
@@ -306,7 +300,10 @@ class baseComponent {
   renders = {}
 
   constructor({ name, structure, parent, render, events, variable, fromElementId }) {
-    if (elementRoot.has(name)) throw "component name already existed.";
+    if (elementRoot.has(name)) {
+      console.warn(`component name ${name} already existed.`);
+      return elementRoot.get(name);
+    }
     elementRoot.add(name, this);
     this.name = name;
     this.parent = parent;
@@ -421,29 +418,24 @@ function handleSwipe({ touchstartX, touchstartY, touchendX, touchendY }, swipeAr
   }
 }
 
-function parseNestedQueryString(queryString) {
-  if (!queryString) return { path: null };
-  const queryParamsIndex = queryString.indexOf("?");
-  if (queryParamsIndex !== -1) {
-    const ret = { path: queryString.slice(0, queryParamsIndex), params: {} };
-
-    const params = queryString.slice(queryParamsIndex + 1);
-    for (let param of params.split("&")) {
-      const [key, value] = param.split("=");
-      ret.params[key] = value;
-    }
-    return ret;
-  } else {
-    return { path: queryString };
+function url_hash_spliter(queryString) {
+  if (!queryString) return { subPaths: {}, params: {} };
+  const [path, params] = queryString.split("?");
+  const paramsObj = {};
+  if (Array.isArray(params)) for (let param of params.split("&")) {
+    const [key, value] = param.split("=");
+    paramsObj[key] = value;
   }
+  const pathObj = [];
+  for (let target of path.split("/")) {
+    //如果target为空，为null, 或为false会跳过
+    if (!target) continue;
+    pathObj.push(target);
+  }
+  return { subPaths: pathObj, params: paramsObj }
 }
 
-function parseHash(hash) {
-  if (!hash) return null;
-  // 去掉前面的/，然后按/分割
-  const hashLevels = hash.slice(1).split('/');
-  return hashLevels;
-}
+
 function getAncestors(element, attribute = compoent_name_prefix) {
   let ancestors = [];
   while (element) {
