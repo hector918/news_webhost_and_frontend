@@ -1,5 +1,6 @@
 const compoent_name_prefix = "compoent_name_";
 const translate_component_key = "translation_";
+const id_key = "id_";
 //////////////////////////////////////////////////////
 class UserEvent {
   constructor(type, category, action, label, value) {
@@ -97,7 +98,7 @@ class elementRootH {
     */
     const route = {};
     let currentPath = route;
-    const { subPaths, params } = url_hash_spliter(path);
+    const { subPaths, params } = this.url_hash_spliter(path);
     for (let pathStep of subPaths) {
       currentPath[pathStep] = {
         "@": {
@@ -121,28 +122,24 @@ class elementRootH {
     this.routes = deepMerge(this.routes, route);
   }
   goRoute(path) {
-
     this.releaseResource(path);
     if (path === this.currentRoute) return;
     this.currentRoute = path;
     let currentPath = this.routes;
-    const { subPaths, params } = url_hash_spliter(path);
+    const { subPaths, params } = this.url_hash_spliter(path);
     for (let pathStep of subPaths) {
-
       if (currentPath[pathStep] === undefined) {
-
         console.error(`${path} not found.`);
       }
-      checkAndRun(currentPath[pathStep]['@']['function'], params);
+      checkAndRun(currentPath[pathStep], params);
       currentPath = currentPath[pathStep];
     }
     window.location.hash = `#${path}`;
     this.tracker.trackPageView();
     ///////////////////////////
     function checkAndRun(fn, param) {
-      if (fn) if (typeof (fn) === "function") {
-        fn(param);
-        return true;
+      if (fn['@']['function']) if (typeof (fn['@']['function']) === "function") {
+        return fn['@']['function'](param);
       }
       return false;
     }
@@ -150,8 +147,8 @@ class elementRootH {
   releaseResource(newRoute) {
     ///////////////////////////
     const findDiffPath = (routeOne, routeTwo) => {
-      const { subPaths: targetPath } = url_hash_spliter(routeOne);
-      const { subPaths: currentPath } = url_hash_spliter(routeTwo);
+      const { subPaths: targetPath } = this.url_hash_spliter(routeOne);
+      const { subPaths: currentPath } = this.url_hash_spliter(routeTwo);
       for (let idx = 0; idx < currentPath.length; idx++) {
         if (currentPath[idx] !== targetPath[idx]) return currentPath[idx];
       }
@@ -189,76 +186,26 @@ class elementRootH {
   has(name) {
     return this.elementList[name] !== undefined;
   }
+
+  url_hash_spliter(queryString) {
+    if (!queryString) return { subPaths: {}, params: {} };
+    const [path, params] = queryString.replace(/#/g, "").split("?");
+    const paramsObj = {};
+    if (Array.isArray(params)) for (let param of params.split("&")) {
+      const [key, value] = param.split("=");
+      paramsObj[key] = value;
+    }
+    const pathObj = [];
+    for (let target of path.split("/")) {
+      //如果target为空，为null, 或为false会跳过
+      if (!target) continue;
+      pathObj.push(target);
+    }
+    return { subPaths: pathObj, params: paramsObj }
+  }
 }
 const elementRoot = new elementRootH();
 
-//////////////////////////////
-class Node {
-  constructor(element) {
-    this.element = element;
-    this.next = null;
-  }
-}
-
-class LinkedListQueue {
-  constructor() {
-    this.front = null;
-    this.rear = null;
-    this.size = 0;
-  }
-
-  // 向队列添加元素
-  enqueue(element) {
-    const newNode = new Node(element);
-    if (this.rear) {
-      this.rear.next = newNode;
-    }
-    this.rear = newNode;
-    if (!this.front) {
-      this.front = newNode;
-    }
-    this.size++;
-  }
-
-  // 从队列移除元素
-  dequeue() {
-    if (this.isEmpty()) {
-      return "Queue is empty";
-    }
-    const removedElement = this.front.element;
-    this.front = this.front.next;
-    if (!this.front) {
-      this.rear = null;
-    }
-    this.size--;
-    return removedElement;
-  }
-
-  // 查看队列头部元素
-  frontElement() {
-    if (this.isEmpty()) {
-      return "Queue is empty";
-    }
-    return this.front.element;
-  }
-
-  // 检查队列是否为空
-  isEmpty() {
-    return this.size === 0;
-  }
-
-  // 查看队列大小
-  getSize() {
-    return this.size;
-  }
-
-  // 清空队列
-  clear() {
-    this.front = null;
-    this.rear = null;
-    this.size = 0;
-  }
-}
 //////////////////////////////////////////////////////
 class variable {
   updateList = {}
@@ -292,7 +239,7 @@ class variable {
   }
 }
 
-//////Hector Jun 1////////////////////////////////
+//////Hector on Jun 1////////////////
 class baseComponent {
   elements = {}
   renders = {}
@@ -341,12 +288,12 @@ class baseComponent {
     const parser = new DOMParser();
     const dom = parser.parseFromString(structure, "text/html");
     this.DOM = dom.body.firstElementChild;
-    const elements = dom.querySelectorAll('[id_]');
+    const elements = dom.querySelectorAll(`[${id_key}]`);
     try {
       this.parent.append(this.DOM);
       this.DOM.setAttribute(compoent_name_prefix, this.name);
       for (let el of elements) {
-        this.elements[el.getAttribute("id_")] = el;
+        this.elements[el.getAttribute(`${id_key}`)] = el;
       }
     } catch (error) {
       console.error(error, `name = ${this.name}, parent = ${this.parent}`);
@@ -390,6 +337,7 @@ function deepMerge(target, source) {
 
   return target;
 }
+
 function handleSwipe({ touchstartX, touchstartY, touchendX, touchendY }, swipeArea) {
   if (!isTouchDevice()) return;
   const diffX = touchendX - touchstartX;
@@ -415,24 +363,6 @@ function handleSwipe({ touchstartX, touchstartY, touchendX, touchendY }, swipeAr
     }
   }
 }
-
-function url_hash_spliter(queryString) {
-  if (!queryString) return { subPaths: {}, params: {} };
-  const [path, params] = queryString.split("?");
-  const paramsObj = {};
-  if (Array.isArray(params)) for (let param of params.split("&")) {
-    const [key, value] = param.split("=");
-    paramsObj[key] = value;
-  }
-  const pathObj = [];
-  for (let target of path.split("/")) {
-    //如果target为空，为null, 或为false会跳过
-    if (!target) continue;
-    pathObj.push(target);
-  }
-  return { subPaths: pathObj, params: paramsObj }
-}
-
 
 function getAncestors(element, attribute = compoent_name_prefix) {
   let ancestors = [];
@@ -520,15 +450,80 @@ function vibrate() {
 //////////
 
 export default {
-  //class
   baseComponent,
   variable,
-  LinkedListQueue,
   UserActivityTracker,
-  //function
+  id_key,
   throttle,
   handleSwipe,
-  //variable
   elementRoot,
   translate_component_key
+}
+
+///LinkedListQueue///////////////////////////
+class Node {
+  constructor(element) {
+    this.element = element;
+    this.next = null;
+  }
+}
+
+class LinkedListQueue {
+  constructor() {
+    this.front = null;
+    this.rear = null;
+    this.size = 0;
+  }
+
+  // 向队列添加元素
+  enqueue(element) {
+    const newNode = new Node(element);
+    if (this.rear) {
+      this.rear.next = newNode;
+    }
+    this.rear = newNode;
+    if (!this.front) {
+      this.front = newNode;
+    }
+    this.size++;
+  }
+
+  // 从队列移除元素
+  dequeue() {
+    if (this.isEmpty()) {
+      return "Queue is empty";
+    }
+    const removedElement = this.front.element;
+    this.front = this.front.next;
+    if (!this.front) {
+      this.rear = null;
+    }
+    this.size--;
+    return removedElement;
+  }
+
+  // 查看队列头部元素
+  frontElement() {
+    if (this.isEmpty()) {
+      return "Queue is empty";
+    }
+    return this.front.element;
+  }
+
+  // 检查队列是否为空
+  isEmpty() {
+    return this.size === 0;
+  }
+
+  // 查看队列大小
+  getSize() {
+    return this.size;
+  }
+
+  // 清空队列
+  clear() {
+    this.front = null;
+    this.rear = null;
+    this.size = 0;
+  }
 }

@@ -1,13 +1,14 @@
 import frame from './frame.js';
 import srv from './fetch_.js';
 import ls from './localStorage.js'
+const id = frame.id_key;
 const elementRoot = frame.elementRoot;
 srv.attachment.userActivity = elementRoot.attachToPost;
 
 new frame.baseComponent({
   name: "root",
   structure: `
-    <div class="is-flex root_ is-flex-grow-1" id_="root_div"></div>
+    <div class="is-flex root_ is-flex-grow-1" ${id}="root_div"></div>
   `,
   parent: document.querySelector("body"),
   render: {
@@ -43,19 +44,19 @@ new frame.baseComponent({
       <div class="navbar-item is-justify-content-space-around is-flex-grow-1">
         <a 
           class="navbar-item" 
-          id_="button-1" 
+          ${id}="button-1" 
           ${frame.translate_component_key}="news"
         >testing</a>
         <a 
           class="navbar-item" 
-          id_="button-2"
+          ${id}="button-2"
           ${frame.translate_component_key}="profile"
         >testing</a>
         <a 
           class="navbar-item" 
-          id_="button-3"${frame.translate_component_key}="testing"
+          ${id}="button-3"${frame.translate_component_key}="testing"
         >testing</a>
-        <a class="navbar-item" id_="button-4">testing</a>
+        <a class="navbar-item" ${id}="button-4">testing</a>
         
       </div>
       
@@ -93,35 +94,41 @@ new frame.baseComponent({
 elementRoot.setRoute("/?testing=true", (params) => {
   new frame.baseComponent({
     name: "mainPanel",
-    structure: `<div class="is-flex-grow-1" id_="main_panel">testing</div>`,
+    structure: `<div class="is-flex-grow-1" ${id}="main_panel">testing</div>`,
     parent: elementRoot.elementList["root"].elements["root_div"],
   });
 });
 
 elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk", (function (params) {
-
+  new frame.baseComponent({
+    name: "mainPanel",
+    structure: `<div class="is-flex-grow-1" ${id}="main_panel">testing</div>`,
+    parent: elementRoot.elementList["root"].elements["root_div"],
+  });
   const gameIndex = new frame.baseComponent({
     name: "game.index",
-    structure: `<div id_="game.index">game.index</div>`,
+    structure: `<div ${id}="game.index">game.index</div>`,
     parent: this.elementList["mainPanel"].elements['main_panel'],
   });
   const kkk = new frame.baseComponent({
     name: "kkk",
-    structure: `<div id_="kkk" ${frame.translate_component_key}="testing">wohoo</div>`,
+    structure: `<div ${id}="kkk" ${frame.translate_component_key}="testing">wohoo</div>`,
     parent: gameIndex.elements["game.index"],
   });
 }));
 
 elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
+
   new frame.baseComponent({
     name: "mainPanel",
-    structure: `<div class="is-flex-grow-1" id_="main_panel">testing</div>`,
+    structure: `<div class="is-flex-grow-1" ${id}="main_panel">testing</div>`,
     parent: elementRoot.elementList["root"].elements["root_div"],
   });
+
   const newsIndex = new frame.baseComponent({
     name: "news.index",
-    structure: `<div class="swipe_panel" id_="swipe_panel">
-      <div id_="news.index">news.index</div>
+    structure: `<div class="swipe_panel" ${id}="swipe_panel">
+      <div ${id}="news.index">news.index</div>
     </div>
     `,
     parent: this.elementList["mainPanel"].elements['main_panel'],
@@ -149,12 +156,15 @@ elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
   });
   const kkk = new frame.baseComponent({
     name: "kkk",
-    structure: `<div id_="kkk">kkk</div>`,
+    structure: `<div ${id}="kkk">kkk</div>`,
     parent: newsIndex.elements["news.index"],
   });
 }));
 
-elementRoot.goRoute("/");
+//init the app start with url
+if (window.location.hash) {
+  elementRoot.goRoute(window.location.hash);
+} else elementRoot.goRoute("/");
 
 const variablePool = {};
 variablePool.user_info = new frame.variable("hello");
@@ -172,7 +182,6 @@ srv.loadLanguage("simplify-chinese", (data, statusCode) => {
 setTimeout(() => {
   variablePool.user_info.set("world");
 }, (2000));
-
 
 export { }
 //event

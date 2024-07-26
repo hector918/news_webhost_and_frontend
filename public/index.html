@@ -70,20 +70,22 @@
   </div>
 </body>
 <script defer type="module">
-
+  var hashString = window.location.hash;
+  console.log(hashString);
   import frame from "./frame.js";
   //Triggered When: The entire page, including all dependent resources like images, scripts, and stylesheets, have fully loaded.
   window.onload = () => {
+
+
     setTimeout(() => {
       frame.elementRoot.elementList["loading"].DOM.classList.add("hidden");
     }, 500);
   }
 </script>
 <script type="module">
-  var hashString = window.location.hash;
-  console.log(hashString)
+
   import frame from "./frame.js";
-  import './content.js';
+  import './instances.js';
   //Triggered When: The initial HTML document has been completely loaded and parsed, without waiting for stylesheets, images, and subframes to finish loading.
   document.addEventListener('DOMContentLoaded', () => {
     // console.log(tracker)
