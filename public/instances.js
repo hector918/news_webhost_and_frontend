@@ -77,7 +77,7 @@ new frame.baseComponent({
     },
     {
       target: "button-2", event: "click", fn: (evt) => {
-        elementRoot.goRoute("/mainPanel/news.index/kkk");
+        elementRoot.goRoute("/mainPanel/news.index");
       }
     },
     {
@@ -117,48 +117,29 @@ elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk"
   });
 }));
 
-elementRoot.setRoute("/mainPanel/news.index/kkk", (function (params) {
+elementRoot.setRoute("/mainPanel/news.index", (function (params) {
 
   new frame.baseComponent({
     name: "mainPanel",
-    structure: `<div class="is-flex-grow-1" ${id}="main_panel">testing</div>`,
+    structure: `<div class="is-flex-grow-1" ${id}="main_panel"></div>`,
     parent: elementRoot.elementList["root"].elements["root_div"],
   });
-
   const newsIndex = new frame.baseComponent({
     name: "news.index",
-    structure: `<div class="swipe_panel" ${id}="swipe_panel">
-      <div ${id}="news.index">news.index</div>
-    </div>
-    `,
+    structure: `<div ${id}="news.index"></div>`,
     parent: this.elementList["mainPanel"].elements['main_panel'],
-    events: [
-      {
-        "target": "swipe_panel", "event": "touchstart", "fn": function (event) {
-          this.touchstartX = event.changedTouches[0].screenX;
-          this.touchstartY = event.changedTouches[0].screenY;
-        }
-      },
-      {
-        "target": "swipe_panel", "event": "touchend", "fn": function (event) {
-          this.touchendX = event.changedTouches[0].screenX;
-          this.touchendY = event.changedTouches[0].screenY;
-          frame.handleSwipe({ touchstartX: this.touchstartX, touchstartY: this.touchstartY, touchendX: this.touchendX, touchendY: this.touchendY }, this.elements['swipe_panel']);
-        }
-      }
-    ],
-    variable: {
-      touchstartX: 0,
-      touchstartY: 0,
-      touchendX: 0,
-      touchendY: 0
-    }
+
   });
-  const kkk = new frame.baseComponent({
-    name: "kkk",
-    structure: `<div ${id}="kkk">kkk</div>`,
-    parent: newsIndex.elements["news.index"],
-  });
+
+  const matrixSize = 100;
+  const matrix = Array.from({ length: matrixSize }, (_, i) =>
+    Array.from({ length: matrixSize }, (_, j) => `Cell ${i + 1},${j + 1}`)
+  );
+  const swipePanel = new frame.swipingMatrix({
+    parent: newsIndex.elements['news.index'],
+    matrix
+  })
+
 }));
 
 //init the app start with url
