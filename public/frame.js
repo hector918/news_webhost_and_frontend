@@ -1,6 +1,164 @@
 const compoent_name_prefix = "compoent_name_";
 const translate_component_key = "translation_";
 const id_key = "id_";
+//swiping matrix/////Hector on Jul 28////////////////
+class swipingMatrix {
+  constructor({ parent, matrix }) {
+    this.id = generateRandomString(10);
+    this.wrapper = document.createElement('div');
+    this.wrapper.style.position = "relative";
+    this.wrapper.style.width = "100%";
+    this.wrapper.style.height = "100%";
+    this.wrapper.style.overflow = "hidden";
+
+    this.container = document.createElement('div');
+    this.container.style.position = "absolute";
+    this.container.style.top = 0;
+    this.container.style.left = 0;
+    this.container.style.width = "300%";
+    this.container.style.height = "300%";
+    this.container.style.display = "flex";
+    this.container.style.flexWrap = "wrap";
+    this.container.addEventListener('touchstart', this.touchStart.bind(this));
+    this.container.addEventListener('touchmove', this.touchMove.bind(this));
+    this.container.addEventListener('touchend', this.touchEnd.bind(this));
+    this.wrapper.append(this.container);
+
+    //init variable
+    this.matrix = matrix;
+    this.touchstartX = 0;
+    this.touchstartY = 0;
+    this.isSwiping = false;
+    this.containerInitialX = 0;
+    this.containerInitialY = 0;
+    this.directionLocked = null;
+    this.transformDuration = 0.3;
+    this.eventList = {
+      "endSwipe": () => { },
+    }
+
+    //set parent
+    this.parent = parent;
+    this.parent.style.margin = 0;
+    this.parent.style.padding = 0;
+    this.parent.style.overflow = "hidden";
+    this.parent.style.height = "100%";
+    this.parent.style.width = "100%";
+    this.parent.append(this.wrapper);
+    this.renderMatrix();
+  }
+  renderMatrix() {
+    this.container.innerHTML = '';
+
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        const row = i + 1;
+        const col = j + 1;
+
+        const cell = document.createElement('div');
+        cell.style.flex = "0 0 33.33%";
+        cell.style.height = "33.33%";
+        cell.style.display = "flex";
+        cell.style.alignItems = "center";
+        cell.style.justifyContent = "center";
+        cell.style.boxSizing = "border - box";
+        cell.classList.add('swipe_panel_cell');
+        if (typeof this.matrix[row][col] === "string") {
+          cell.innerHTML = this.matrix[row][col];
+        } else {
+          cell.append(this.matrix[row][col]);
+        }
+        this.container.appendChild(cell);
+      }
+    }
+    // 暂时移除过渡效果
+    this.container.style.transition = 'none';
+    // 设置目标位置
+    this.container.style.transform = `translate(-33.33%, -33.33%)`;
+    // 强制重绘以应用无过渡的样式变化
+    this.container.offsetHeight; // 读取属性触发重绘
+    // 恢复过渡效果
+    this.container.style.transition = '';
+  }
+
+  touchStart(e) {
+    this.touchstartX = e.changedTouches[0].screenX;
+    this.touchstartY = e.changedTouches[0].screenY;
+    this.isSwiping = true;
+    this.container.style.transition = 'none';
+    this.directionLocked = null;
+    const style = window.getComputedStyle(this.container);
+    const matrix = new WebKitCSSMatrix(style.transform);
+    this.containerInitialX = matrix.m41;
+    this.containerInitialY = matrix.m42;
+  }
+  touchMove(e) {
+    if (!this.isSwiping) return;
+    const touch = e.changedTouches[0];
+    const diffX = touch.screenX - this.touchstartX;
+    const diffY = touch.screenY - this.touchstartY;
+
+    if (this.directionLocked === null) {
+      this.directionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
+    }
+
+    if (this.directionLocked === 'horizontal') {
+      this.container.style.transform = `translate(${this.containerInitialX + diffX}px, ${this.containerInitialY}px)`;
+    } else if (this.directionLocked === 'vertical') {
+      this.container.style.transform = `translate(${this.containerInitialX}px, ${this.containerInitialY + diffY}px)`;
+    }
+  }
+
+  touchEnd(e) {
+    if (!this.isSwiping) return;
+    this.isSwiping = false;
+
+    const touchendX = e.changedTouches[0].screenX;
+    const touchendY = e.changedTouches[0].screenY;
+    const diffX = touchendX - this.touchstartX;
+    const diffY = touchendY - this.touchstartY;
+    let moveDirection = undefined;
+
+    if (this.directionLocked === 'horizontal') {
+      if (Math.abs(diffX) > window.innerWidth / 6) {
+        if (diffX > 0) {
+          this.container.style.transform = `translate(0%, -33.33%)`;
+          moveDirection = "up";
+        } else {
+          this.container.style.transform = `translate(-66.66%, -33.33%)`;
+          moveDirection = "down";
+        }
+      }
+    } else if (this.directionLocked === 'vertical') {
+      if (Math.abs(diffY) > window.innerHeight / 6) {
+        if (diffY > 0) {
+          this.container.style.transform = `translate(-33.33%, 0%)`;
+          moveDirection = "left";
+        } else {
+          this.container.style.transform = `translate(-33.33%, -66.66%)`;
+          moveDirection = "right";
+        }
+      }
+    }
+
+    this.container.style.transition = `transform ${this.transformDuration}s ease`;
+    if (moveDirection) {
+      //continue the move
+      setTimeout(() => {
+        this.renderMatrix();
+      }, this.transformDuration * 1000);
+    } else {
+      //reset the position
+      this.container.style.transform = `translate(-33.33%, -33.33%)`;
+    }
+    //trigger touch end event callback
+    if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
+  }
+
+  updateEvent(name, fn) {
+    if (typeof fn === "function") this.eventList[name] = fn;
+  }
+}
 //////////////////////////////////////////////////////
 class UserEvent {
   constructor(type, category, action, label, value) {
@@ -311,182 +469,7 @@ class baseComponent {
   }
 }
 
-//swiping matrix/////Hector on Jul 28////////////////
-class swipingMatrix {
-  constructor({ parent, matrix }) {
-    this.id = generateRandomString(10);
-    this.wrapper = document.createElement('div');
-    this.wrapper.style.position = "relative";
-    this.wrapper.style.width = "100%";
-    this.wrapper.style.height = "100%";
-    this.wrapper.style.overflow = "hidden";
 
-    this.container = document.createElement('div');
-    this.container.style.position = "absolute";
-    this.container.style.top = 0;
-    this.container.style.left = 0;
-    this.container.style.width = "300%";
-    this.container.style.height = "300%";
-    this.container.style.display = "flex";
-    this.container.style.flexWrap = "wrap";
-    this.container.addEventListener('touchstart', this.touchStart.bind(this));
-    this.container.addEventListener('touchmove', this.touchMove.bind(this));
-    this.container.addEventListener('touchend', this.touchEnd.bind(this));
-    this.wrapper.append(this.container);
-
-    //init variable
-    this.matrix = matrix;
-    this.currentRow = 0;
-    this.currentCol = 0;
-    this.touchstartX = 0;
-    this.touchstartY = 0;
-    this.isSwiping = false;
-    this.containerInitialX = 0;
-    this.containerInitialY = 0;
-    this.directionLocked = null;
-    this.transformDuration = 0.3;
-    this.eventList = {
-      "endSwipe": () => { },
-    }
-    this.colors = [
-      '#FFB6C1', '#FFD700', '#90EE90', '#ADD8E6', '#FF69B4',
-      '#8A2BE2', '#FF7F50', '#5F9EA0', '#7FFF00'
-    ];
-    //set parent
-    this.parent = parent;
-    this.parent.style.margin = 0;
-    this.parent.style.padding = 0;
-    this.parent.style.overflow = "hidden";
-    this.parent.style.height = "100%";
-    this.parent.style.width = "100%";
-    this.parent.append(this.wrapper);
-    this.renderMatrix();
-  }
-  renderMatrix() {
-    this.container.innerHTML = '';
-
-    for (let i = -1; i <= 1; i++) {
-      for (let j = -1; j <= 1; j++) {
-        const row = i + 1;
-        const col = j + 1;
-        // const row = (this.currentRow + i + matrixSize) % matrixSize;
-        // const col = (currentCol + j + matrixSize) % matrixSize;
-        const cell = document.createElement('div');
-        cell.style.flex = "0 0 33.33%";
-        cell.style.height = "33.33%";
-        cell.style.display = "flex";
-        cell.style.alignItems = "center";
-        cell.style.justifyContent = "center";
-        cell.style.boxSizing = "border - box";
-
-        cell.classList.add('cell');
-        if (typeof this.matrix[row][col] === "string") {
-          cell.innerHTML = this.matrix[row][col];
-        } else {
-          cell.append(this.matrix[row][col]);
-        }
-        // cell.textContent = matrix[row][col];
-        // if (row >= 0 && row < matrixSize && col >= 0 && col < matrixSize) {
-        //   cell.textContent = matrix[row][col];
-        //   cell.style.backgroundColor = colors[(row * matrixSize + col) % colors.length];
-        // } else {
-        //   cell.textContent = 'Out of bounds';
-        //   cell.style.backgroundColor = '#D3D3D3';
-        // }
-        this.container.appendChild(cell);
-      }
-    }
-    // 暂时移除过渡效果
-    this.container.style.transition = 'none';
-    // 设置目标位置
-    this.container.style.transform = `translate(-33.33%, -33.33%)`;
-    // 强制重绘以应用无过渡的样式变化
-    this.container.offsetHeight; // 读取属性触发重绘
-    // 恢复过渡效果
-    this.container.style.transition = '';
-  }
-
-  touchStart(e) {
-    this.touchstartX = e.changedTouches[0].screenX;
-    this.touchstartY = e.changedTouches[0].screenY;
-    this.isSwiping = true;
-    this.container.style.transition = 'none';
-    this.directionLocked = null;
-    const style = window.getComputedStyle(this.container);
-    const matrix = new WebKitCSSMatrix(style.transform);
-    this.containerInitialX = matrix.m41;
-    this.containerInitialY = matrix.m42;
-  }
-  touchMove(e) {
-    if (!this.isSwiping) return;
-    const touch = e.changedTouches[0];
-    const diffX = touch.screenX - this.touchstartX;
-    const diffY = touch.screenY - this.touchstartY;
-
-    if (this.directionLocked === null) {
-      this.directionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
-    }
-
-    if (this.directionLocked === 'horizontal') {
-      this.container.style.transform = `translate(${this.containerInitialX + diffX}px, ${this.containerInitialY}px)`;
-    } else if (this.directionLocked === 'vertical') {
-      this.container.style.transform = `translate(${this.containerInitialX}px, ${this.containerInitialY + diffY}px)`;
-    }
-  }
-
-  touchEnd(e) {
-    if (!this.isSwiping) return;
-    this.isSwiping = false;
-
-    const touchendX = e.changedTouches[0].screenX;
-    const touchendY = e.changedTouches[0].screenY;
-    const diffX = touchendX - this.touchstartX;
-    const diffY = touchendY - this.touchstartY;
-    let moveDirection = undefined;
-
-    if (this.directionLocked === 'horizontal') {
-      if (Math.abs(diffX) > window.innerWidth / 6) {
-        if (diffX > 0) {
-          // currentCol = (currentCol - 1 + matrixSize) % matrixSize;
-          this.container.style.transform = `translate(0%, -33.33%)`;
-          moveDirection = "up";
-        } else {
-          // currentCol = (currentCol + 1) % matrixSize;
-          this.container.style.transform = `translate(-66.66%, -33.33%)`;
-          moveDirection = "down";
-        }
-      }
-    } else if (this.directionLocked === 'vertical') {
-      if (Math.abs(diffY) > window.innerHeight / 6) {
-        if (diffY > 0) {
-          // currentRow = (currentRow - 1 + matrixSize) % matrixSize;
-          this.container.style.transform = `translate(-33.33%, 0%)`;
-          moveDirection = "left";
-        } else {
-          // currentRow = (currentRow + 1) % matrixSize;
-          this.container.style.transform = `translate(-33.33%, -66.66%)`;
-          moveDirection = "right";
-        }
-      }
-    }
-
-    this.container.style.transition = `transform ${this.transformDuration}s ease`;
-    if (moveDirection) {
-      setTimeout(() => {
-        this.renderMatrix();
-      }, this.transformDuration * 1000);
-    } else {
-      this.container.style.transform = `translate(-$33.33%, -$33.33%)`;
-    }
-
-    if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
-
-  }
-
-  updateEvent(name, fn) {
-    if (typeof fn === "functin") this.eventList[name] = fn;
-  }
-}
 //通用函数//////////////////////////////////////////////////
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
