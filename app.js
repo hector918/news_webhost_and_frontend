@@ -8,9 +8,9 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const RedisStore = require("connect-redis").default
 const { session_redis } = require('./db/session-redis');
-const { user } = require('./controllers/user-control');
+const { user, save_user_telemetry } = require('./controllers/user-control');
 const { logging, access_logging } = require('./db/logging');
-const { process_user_telemetry } = require('./controllers/user-telemetry');
+
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 //////////////////////////////////////////////////////
 app.set('trust proxy', 1);
@@ -66,7 +66,7 @@ app.use((req, res, next) => {
   });
   //user telemetry entry
   if (req.body.userActivity) {
-    process_user_telemetry(req.body.userActivity);
+    save_user_telemetry(req.body.userActivity, req.session?.user_info?.email);
   }
   //此处暂时没有作用
   process.send({ 'query_user_info': "email" });

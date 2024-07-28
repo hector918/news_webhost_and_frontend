@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require("express");
 const user = express.Router();
 const nodemailer = require('nodemailer');
-const { create_user, get_user } = require('../queries/users-query');
+const { create_user, get_user, save_telemetry } = require('../queries/users-query');
 const bcrypt = require('bcrypt');
 const { logging, getLineNumberAndFileName } = require('../db/logging');
 
@@ -112,8 +112,33 @@ const vaildate_login = (req, res, next) => {
     res.status(401).json({ "error": "unauthorized access" });
   }
 }
-
-module.exports = { user, vaildate_login };
+const save_user_telemetry = (records, email) => {
+  const template = { 'page_url': "pageUrl", 'user_agent': "userAgent", 'value': "value", 'label': "label", 'action': "action", 'category': "category", 'type': "type", 'timestamp': "timestamp" };
+  const ret = [];
+  for (let row of records) {
+    const temp = {};
+    for (let key in template) {
+      temp[key] = truncateString(row[template[key]]);
+    }
+    temp['user_email'] = email || "";
+    ret.push(temp);
+  }
+  save_telemetry(ret);
+  ///////////////////////////
+  function truncateString(str, maxLength) {
+    switch (typeof str) {
+      case "number": return str;
+      case "string": {
+        if (str.length > maxLength) {
+          return str.substring(0, maxLength);
+        } else return str;
+      }
+      default:
+        return ""
+    }
+  }
+}
+module.exports = { user, vaildate_login, save_user_telemetry };
 
 
 function randomAnonymousName() {

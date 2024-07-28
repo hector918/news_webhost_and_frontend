@@ -58,13 +58,14 @@
       Array.from({ length: matrixSize }, (_, j) => `Cell ${i + 1},${j + 1}`)
     );
 
-    let currentRow = 0;
-    let currentCol = 0;
+    let currentRow = 1;
+    let currentCol = 1;
     let touchstartX = 0;
     let touchstartY = 0;
     let isSwiping = false;
 
     const container = document.getElementById('container');
+
     const colors = [
       '#FFB6C1', '#FFD700', '#90EE90', '#ADD8E6', '#FF69B4',
       '#8A2BE2', '#FF7F50', '#5F9EA0', '#7FFF00'
@@ -75,8 +76,8 @@
 
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
-          const row = (currentRow + i + matrixSize) % matrixSize;
-          const col = (currentCol + j + matrixSize) % matrixSize;
+          const row = currentRow + i;
+          const col = currentCol + j;
           const cell = document.createElement('div');
           cell.classList.add('cell');
 
@@ -99,7 +100,6 @@
       touchstartX = e.changedTouches[0].screenX;
       touchstartY = e.changedTouches[0].screenY;
       isSwiping = true;
-      container.style.transition = 'none';
     });
 
     container.addEventListener('touchmove', (e) => {
@@ -108,6 +108,7 @@
       const diffX = touch.screenX - touchstartX;
       const diffY = touch.screenY - touchstartY;
 
+      container.style.transition = '';
       container.style.transform = `translate(calc(-${100}vw + ${diffX}px), calc(-${100}vh + ${diffY}px))`;
     });
 
@@ -121,19 +122,28 @@
       const diffY = touchendY - touchstartY;
 
       if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (Math.abs(diffX) > window.innerWidth / 3) {
-          currentCol = (diffX > 0) ? (currentCol - 1 + matrixSize) % matrixSize : (currentCol + 1) % matrixSize;
+        if (Math.abs(diffX) > window.innerWidth / 6) {
+          if (diffX > 0 && currentCol > 0) {
+            currentCol--;
+          } else if (diffX < 0 && currentCol < matrixSize - 1) {
+            currentCol++;
+          }
         }
       } else {
-        if (Math.abs(diffY) > window.innerHeight / 3) {
-          currentRow = (diffY > 0) ? (currentRow - 1 + matrixSize) % matrixSize : (currentRow + 1) % matrixSize;
+        if (Math.abs(diffY) > window.innerHeight / 6) {
+          if (diffY > 0 && currentRow > 0) {
+            currentRow--;
+          } else if (diffY < 0 && currentRow < matrixSize - 1) {
+            currentRow++;
+          }
         }
       }
 
-      container.style.transition = 'transform 1.3s ease';
       renderMatrix();
+      container.style.transition = 'transform 0.3s ease';
     });
 
+    // 初始化显示
     renderMatrix();
   </script>
 </body>

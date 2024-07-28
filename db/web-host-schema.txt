@@ -22,7 +22,7 @@ CREATE UNIQUE INDEX users_email_key ON users(email text_ops);
 
 
 CREATE TABLE user_telemetry (
-    id integer PRIMARY KEY,
+    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     page_url character varying(255),
     user_agent character varying(255),
     value character varying(255),
@@ -30,10 +30,9 @@ CREATE TABLE user_telemetry (
     action character varying(255),
     category character varying(255),
     type character varying(255),
-    timestamp date,
+    timestamp timestamp with time zone,
     user_email character varying(255)
 );
-
 -- Indices -------------------------------------------------------
 
 CREATE UNIQUE INDEX user_telemetry_pkey ON user_telemetry(id int4_ops);

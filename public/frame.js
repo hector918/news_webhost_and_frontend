@@ -71,8 +71,8 @@ class UserActivityTracker {
 
 ////////////////////////
 class elementRootH {
-  elementList = {}
-  routes = {}
+  elementList = {};
+  routes = {};
   currentRoute = "";
   constructor() {
     this.tracker = new UserActivityTracker()
@@ -162,7 +162,6 @@ class elementRootH {
     if (!this.has(name)) this.elementList[name] = ele;
   }
   del(name) {
-
     if (this.has(name)) {
       const deleteList = this.elementList[name].DOM.querySelectorAll(`[${compoent_name_prefix}]`);
       for (let el of deleteList) {
@@ -208,8 +207,8 @@ const elementRoot = new elementRootH();
 
 //////////////////////////////////////////////////////
 class variable {
-  updateList = {}
-  data = null
+  updateList = {};
+  data = null;
 
   constructor(defaultVal = undefined) {
     this.data = defaultVal;
@@ -241,8 +240,8 @@ class variable {
 
 //////Hector on Jun 1////////////////
 class baseComponent {
-  elements = {}
-  renders = {}
+  elements = {};
+  renders = {};
 
   constructor({ name, structure, parent, render, events, variable, fromElementId }) {
     if (elementRoot.has(name)) {
@@ -448,7 +447,6 @@ function vibrate() {
   }
 }
 //////////
-
 export default {
   baseComponent,
   variable,

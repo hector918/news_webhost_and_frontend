@@ -1,4 +1,4 @@
-const { db: web_host_db, table_name } = require('../db/web-host');
+const { db: web_host_db, pgp, table_name } = require('../db/web-host');
 const { logging, getLineNumberAndFileName } = require('../db/logging');
 
 const get_user = async ({ email, id }) => {
@@ -40,4 +40,32 @@ const set_user_disable = (email) => {
 
 }
 
-module.exports = { get_user, create_user }
+const save_telemetry = (user_events) => {
+  // Define the column set based on the table structure
+  const cs = new pgp.helpers.ColumnSet([
+    'page_url',
+    'user_agent',
+    'value',
+    'label',
+    'action',
+    'category',
+    'type',
+    'timestamp',
+    'user_email'
+  ], { table: table_name['user_telemetry'] });
+
+  // Generate the multi-row insert query
+  const query = pgp.helpers.insert(user_events, cs) + ' RETURNING id;';
+
+  // Execute the query
+  return web_host_db.any(query)
+    .then(data => {
+      return data;
+    })
+    .catch(error => {
+      console.error('Error inserting data:', error);
+    });
+};
+
+
+module.exports = { get_user, create_user, save_telemetry }

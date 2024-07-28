@@ -5,7 +5,7 @@ const { logging, getLineNumberAndFileName } = require('../db/logging');
 
 test.post("/", async (req, res) => {
   await req.common_wrapper(async () => {
-    console.log(req.body);
+    // console.log(req.body);
     return req.body;
   })
 })
