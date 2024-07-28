@@ -311,7 +311,164 @@ class baseComponent {
   }
 }
 
+//swiping matrix/////Hector on Jul 28////////////////
+class swipingMatrix {
+  constructor({ parent, matrix }) {
+    this.id = generateRandomString(10);
+    this.wrapper = document.createElement('div');
+    this.container = document.createElement('div');
+    this.wrapper.append(this.container);
+    //init variable
+    this.currentRow = 0;
+    this.currentCol = 0;
+    this.touchstartX = 0;
+    this.touchstartY = 0;
+    this.isSwiping = false;
+    this.containerInitialX = 0;
+    this.containerInitialY = 0;
+    this.directionLocked = null;
+    this.transformDuration = 0.3;
+    this.eventList = {
+      "endSwipe": () => { },
+
+    }
+    this.colors = [
+      '#FFB6C1', '#FFD700', '#90EE90', '#ADD8E6', '#FF69B4',
+      '#8A2BE2', '#FF7F50', '#5F9EA0', '#7FFF00'
+    ];
+    //set parent
+    this.parent = parent;
+    this.parent.style.margin = 0;
+    this.parent.style.padding = 0;
+    this.parent.style.overflow = "hidden";
+    this.parent.style.height = "100%";
+    this.parent.style.width = "100%";
+    this.renderMatrix();
+  }
+  renderMatrix() {
+    this.container.innerHTML = '';
+
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        // const row = (this.currentRow + i + matrixSize) % matrixSize;
+        // const col = (currentCol + j + matrixSize) % matrixSize;
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.textContent = matrix[row][col];
+        // if (row >= 0 && row < matrixSize && col >= 0 && col < matrixSize) {
+        //   cell.textContent = matrix[row][col];
+        //   cell.style.backgroundColor = colors[(row * matrixSize + col) % colors.length];
+        // } else {
+        //   cell.textContent = 'Out of bounds';
+        //   cell.style.backgroundColor = '#D3D3D3';
+        // }
+        container.appendChild(cell);
+      }
+    }
+    // 暂时移除过渡效果
+    container.style.transition = 'none';
+    // 设置目标位置
+    container.style.transform = `translate(-${100}vw, -${100}vh)`;
+    // 强制重绘以应用无过渡的样式变化
+    container.offsetHeight; // 读取属性触发重绘
+    // 恢复过渡效果
+    container.style.transition = '';
+  }
+
+  touchStart(e) {
+    touchstartX = e.changedTouches[0].screenX;
+    touchstartY = e.changedTouches[0].screenY;
+    this.isSwiping = true;
+    this.container.style.transition = 'none';
+    this.directionLocked = null;
+    const style = window.getComputedStyle(this.container);
+    const matrix = new WebKitCSSMatrix(style.transform);
+    this.containerInitialX = matrix.m41;
+    this.containerInitialY = matrix.m42;
+  }
+  touchMove(e) {
+    if (!this.isSwiping) return;
+    const touch = e.changedTouches[0];
+    const diffX = touch.screenX - touchstartX;
+    const diffY = touch.screenY - touchstartY;
+
+    if (this.directionLocked === null) {
+      this.directionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
+    }
+
+    if (this.directionLocked === 'horizontal') {
+      this.container.style.transform = `translate(${this.containerInitialX + diffX}px, ${this.containerInitialY}px)`;
+    } else if (this.directionLocked === 'vertical') {
+      this.container.style.transform = `translate(${this.containerInitialX}px, ${this.containerInitialY + diffY}px)`;
+    }
+  }
+
+  touchEnd(e) {
+    if (!this.isSwiping) return;
+    this.isSwiping = false;
+
+    const touchendX = e.changedTouches[0].screenX;
+    const touchendY = e.changedTouches[0].screenY;
+    const diffX = touchendX - touchstartX;
+    const diffY = touchendY - touchstartY;
+    let moveDirection = undefined;
+
+    if (this.directionLocked === 'horizontal') {
+      if (Math.abs(diffX) > window.innerWidth / 6) {
+        if (diffX > 0) {
+          // currentCol = (currentCol - 1 + matrixSize) % matrixSize;
+          this.container.style.transform = `translate(-${0}vw, -${100}vh)`;
+          moveDirection = "up";
+        } else {
+          // currentCol = (currentCol + 1) % matrixSize;
+          this.container.style.transform = `translate(-${200}vw, -${100}vh)`;
+          moveDirection = "down";
+        }
+      }
+    } else if (this.directionLocked === 'vertical') {
+      if (Math.abs(diffY) > window.innerHeight / 6) {
+        if (diffY > 0) {
+          // currentRow = (currentRow - 1 + matrixSize) % matrixSize;
+          this.container.style.transform = `translate(-${100}vw, -${0}vh)`;
+          moveDirection = "left";
+        } else {
+          // currentRow = (currentRow + 1) % matrixSize;
+          this.container.style.transform = `translate(-${100}vw, -${200}vh)`;
+          moveDirection = "right";
+        }
+      }
+    }
+
+    container.style.transition = `transform ${transformDuration}s ease`;
+    if (moveDirection) {
+      setTimeout(() => {
+        renderMatrix();
+      }, this.transformDuration * 1000);
+    } else {
+      this.container.style.transform = `translate(-${100}vw, -${100}vh)`;
+    }
+
+    if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
+
+  }
+
+  updateEvent(name, fn) {
+    if (typeof fn === "functin") this.eventList[name] = fn;
+  }
+}
 //通用函数//////////////////////////////////////////////////
+function generateRandomString(length) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+}
+
 function deepMerge(target, source) {
   if (typeof target !== 'object' || target === null) {
     return source;
@@ -451,6 +608,7 @@ export default {
   baseComponent,
   variable,
   UserActivityTracker,
+  swipingMatrix,
   id_key,
   throttle,
   handleSwipe,

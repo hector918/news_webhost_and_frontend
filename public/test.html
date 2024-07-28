@@ -31,7 +31,7 @@
       height: 300%;
       display: flex;
       flex-wrap: wrap;
-      transition: transform 0.3s ease;
+
     }
 
     .cell {
@@ -63,6 +63,10 @@
     let touchstartX = 0;
     let touchstartY = 0;
     let isSwiping = false;
+    let containerInitialX = 0;
+    let containerInitialY = 0;
+    let directionLocked = null;
+    const transformDuration = 0.3;
 
     const container = document.getElementById('container');
     const colors = [
@@ -92,7 +96,16 @@
         }
       }
 
+      // 暂时移除过渡效果
+      container.style.transition = 'none';
+      // 设置目标位置
       container.style.transform = `translate(-${100}vw, -${100}vh)`;
+
+      // 强制重绘以应用无过渡的样式变化
+      container.offsetHeight; // 读取属性触发重绘
+
+      // 恢复过渡效果
+      container.style.transition = '';
     }
 
     container.addEventListener('touchstart', (e) => {
@@ -100,6 +113,12 @@
       touchstartY = e.changedTouches[0].screenY;
       isSwiping = true;
       container.style.transition = 'none';
+      directionLocked = null;
+
+      const style = window.getComputedStyle(container);
+      const matrix = new WebKitCSSMatrix(style.transform);
+      containerInitialX = matrix.m41;
+      containerInitialY = matrix.m42;
     });
 
     container.addEventListener('touchmove', (e) => {
@@ -108,7 +127,15 @@
       const diffX = touch.screenX - touchstartX;
       const diffY = touch.screenY - touchstartY;
 
-      container.style.transform = `translate(calc(-${100}vw + ${diffX}px), calc(-${100}vh + ${diffY}px))`;
+      if (directionLocked === null) {
+        directionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
+      }
+
+      if (directionLocked === 'horizontal') {
+        container.style.transform = `translate(${containerInitialX + diffX}px, ${containerInitialY}px)`;
+      } else if (directionLocked === 'vertical') {
+        container.style.transform = `translate(${containerInitialX}px, ${containerInitialY + diffY}px)`;
+      }
     });
 
     container.addEventListener('touchend', (e) => {
@@ -119,19 +146,41 @@
       const touchendY = e.changedTouches[0].screenY;
       const diffX = touchendX - touchstartX;
       const diffY = touchendY - touchstartY;
+      let isChanged = false;
 
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (Math.abs(diffX) > window.innerWidth / 3) {
-          currentCol = (diffX > 0) ? (currentCol - 1 + matrixSize) % matrixSize : (currentCol + 1) % matrixSize;
+      if (directionLocked === 'horizontal') {
+        if (Math.abs(diffX) > window.innerWidth / 6) {
+          if (diffX > 0) {
+            currentCol = (currentCol - 1 + matrixSize) % matrixSize;
+            container.style.transform = `translate(-${0}vw, -${100}vh)`;
+          } else {
+            currentCol = (currentCol + 1) % matrixSize;
+            container.style.transform = `translate(-${200}vw, -${100}vh)`;
+          }
+          isChanged = true;
         }
-      } else {
-        if (Math.abs(diffY) > window.innerHeight / 3) {
-          currentRow = (diffY > 0) ? (currentRow - 1 + matrixSize) % matrixSize : (currentRow + 1) % matrixSize;
+      } else if (directionLocked === 'vertical') {
+        if (Math.abs(diffY) > window.innerHeight / 6) {
+          if (diffY > 0) {
+            currentRow = (currentRow - 1 + matrixSize) % matrixSize;
+            container.style.transform = `translate(-${100}vw, -${0}vh)`;
+          } else {
+            currentRow = (currentRow + 1) % matrixSize;
+            container.style.transform = `translate(-${100}vw, -${200}vh)`;
+          }
+          isChanged = true;
         }
       }
 
-      container.style.transition = 'transform 1.3s ease';
-      renderMatrix();
+      container.style.transition = `transform ${transformDuration}s ease`;
+      if (isChanged) {
+        setTimeout(() => {
+          renderMatrix();
+        }, transformDuration * 1000);
+      } else {
+        console.log("Dsa")
+        container.style.transform = `translate(-${100}vw, -${100}vh)`;
+      }
     });
 
     renderMatrix();

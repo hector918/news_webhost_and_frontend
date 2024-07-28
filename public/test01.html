@@ -31,7 +31,7 @@
       height: 300%;
       display: flex;
       flex-wrap: wrap;
-      transition: transform 0.3s ease;
+
     }
 
     .cell {
@@ -58,14 +58,17 @@
       Array.from({ length: matrixSize }, (_, j) => `Cell ${i + 1},${j + 1}`)
     );
 
-    let currentRow = 1;
-    let currentCol = 1;
+    let currentRow = 0;
+    let currentCol = 0;
     let touchstartX = 0;
     let touchstartY = 0;
     let isSwiping = false;
+    let containerInitialX = 0;
+    let containerInitialY = 0;
+    let directionLocked = null;
+    const transformDuration = 0.3;
 
     const container = document.getElementById('container');
-
     const colors = [
       '#FFB6C1', '#FFD700', '#90EE90', '#ADD8E6', '#FF69B4',
       '#8A2BE2', '#FF7F50', '#5F9EA0', '#7FFF00'
@@ -76,8 +79,8 @@
 
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
-          const row = currentRow + i;
-          const col = currentCol + j;
+          const row = (currentRow + i + matrixSize) % matrixSize;
+          const col = (currentCol + j + matrixSize) % matrixSize;
           const cell = document.createElement('div');
           cell.classList.add('cell');
 
@@ -93,13 +96,29 @@
         }
       }
 
+      // 暂时移除过渡效果
+      container.style.transition = 'none';
+      // 设置目标位置
       container.style.transform = `translate(-${100}vw, -${100}vh)`;
+
+      // 强制重绘以应用无过渡的样式变化
+      container.offsetHeight; // 读取属性触发重绘
+
+      // 恢复过渡效果
+      container.style.transition = '';
     }
 
     container.addEventListener('touchstart', (e) => {
       touchstartX = e.changedTouches[0].screenX;
       touchstartY = e.changedTouches[0].screenY;
       isSwiping = true;
+      container.style.transition = 'none';
+      directionLocked = null;
+
+      const style = window.getComputedStyle(container);
+      const matrix = new WebKitCSSMatrix(style.transform);
+      containerInitialX = matrix.m41;
+      containerInitialY = matrix.m42;
     });
 
     container.addEventListener('touchmove', (e) => {
@@ -108,8 +127,15 @@
       const diffX = touch.screenX - touchstartX;
       const diffY = touch.screenY - touchstartY;
 
-      container.style.transition = '';
-      container.style.transform = `translate(calc(-${100}vw + ${diffX}px), calc(-${100}vh + ${diffY}px))`;
+      if (directionLocked === null) {
+        directionLocked = Math.abs(diffX) > Math.abs(diffY) ? 'horizontal' : 'vertical';
+      }
+
+      if (directionLocked === 'horizontal') {
+        container.style.transform = `translate(${containerInitialX + diffX}px, ${containerInitialY}px)`;
+      } else if (directionLocked === 'vertical') {
+        container.style.transform = `translate(${containerInitialX}px, ${containerInitialY + diffY}px)`;
+      }
     });
 
     container.addEventListener('touchend', (e) => {
@@ -120,30 +146,43 @@
       const touchendY = e.changedTouches[0].screenY;
       const diffX = touchendX - touchstartX;
       const diffY = touchendY - touchstartY;
+      let isChanged = false;
 
-      if (Math.abs(diffX) > Math.abs(diffY)) {
+      if (directionLocked === 'horizontal') {
         if (Math.abs(diffX) > window.innerWidth / 6) {
-          if (diffX > 0 && currentCol > 0) {
-            currentCol--;
-          } else if (diffX < 0 && currentCol < matrixSize - 1) {
-            currentCol++;
+          if (diffX > 0) {
+            currentCol = (currentCol - 1 + matrixSize) % matrixSize;
+            container.style.transform = `translate(-${0}vw, -${100}vh)`;
+          } else {
+            currentCol = (currentCol + 1) % matrixSize;
+            container.style.transform = `translate(-${200}vw, -${100}vh)`;
           }
+          isChanged = true;
         }
-      } else {
+      } else if (directionLocked === 'vertical') {
         if (Math.abs(diffY) > window.innerHeight / 6) {
-          if (diffY > 0 && currentRow > 0) {
-            currentRow--;
-          } else if (diffY < 0 && currentRow < matrixSize - 1) {
-            currentRow++;
+          if (diffY > 0) {
+            currentRow = (currentRow - 1 + matrixSize) % matrixSize;
+            container.style.transform = `translate(-${100}vw, -${0}vh)`;
+          } else {
+            currentRow = (currentRow + 1) % matrixSize;
+            container.style.transform = `translate(-${100}vw, -${200}vh)`;
           }
+          isChanged = true;
         }
       }
 
-      renderMatrix();
-      container.style.transition = 'transform 0.3s ease';
+      container.style.transition = `transform ${transformDuration}s ease`;
+      if (isChanged) {
+        setTimeout(() => {
+          renderMatrix();
+        }, transformDuration * 1000);
+      } else {
+        console.log("Dsa")
+        container.style.transform = `translate(-${100}vw, -${100}vh)`;
+      }
     });
 
-    // 初始化显示
     renderMatrix();
   </script>
 </body>
