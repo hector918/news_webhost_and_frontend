@@ -21,7 +21,8 @@ try {
 
 const table_name = {
   user_table_name: '\"users\"',
-  user_telemetry: 'user_telemetry'
+  user_telemetry: 'user_telemetry',
+  news_cluster: '\"news_cluster\"'
 }
 
 module.exports = { db, pgp, table_name };

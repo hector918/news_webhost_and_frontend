@@ -6,7 +6,7 @@ const app = require('./app');
 require('dotenv').config();
 
 const { masterProcessQueries } = require('./running-memory');
-
+const scheduled_tasks = require('./controllers/scheduled-tasks');
 const numCPUs = os.cpus().length;
 if (cluster.isMaster) {
   console.log(`Master ${process.pid} is running`);
@@ -29,6 +29,12 @@ if (cluster.isMaster) {
     console.log(`Worker ${worker.process.pid} died`);
     cluster.fork();
   });
+
+  // Asynchronous timed task
+  setInterval(() => {
+    scheduled_tasks()
+  }, 1000 * 60 * 60); // 1 hour
+
 } else {
 
   const options = {

@@ -37,3 +37,12 @@ CREATE TABLE user_telemetry (
 
 CREATE UNIQUE INDEX user_telemetry_pkey ON user_telemetry(id int4_ops);
 CREATE INDEX user_email_index ON user_telemetry(user_email text_ops);
+
+
+CREATE TABLE news_cluster (
+    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    timestamp timestamp with time zone DEFAULT now(),
+    cluster text[],
+    related_neighbors json,
+    status smallint DEFAULT 0
+);

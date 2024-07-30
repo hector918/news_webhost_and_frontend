@@ -1,3 +1,4 @@
+const { logDB_control_panel_code } = require('../variables');
 const pgp = require("pg-promise")();
 require("dotenv").config();
 
@@ -54,9 +55,8 @@ const access_logging = (ip, path, email, time_lapse) => {
     }
   })()
 }
-const logging = (message, line_at, level = 0) => {
+const logToDatabase = (message, line_at, level = 0) => {
   (async () => {
-    console.log(message, line_at);
     let session = null;
     try {
       // Acquire a new session
@@ -82,6 +82,37 @@ const logging = (message, line_at, level = 0) => {
     }
   })()
 }
+
+const logging = (message, line_at) => {
+  console.log(message, line_at);
+  logToDatabase(message, line_at, 0);
+};
+
+logging.info = (message, line_at) => {
+  console.info('INFO:', message, line_at);
+  logToDatabase(message, line_at, 1);
+};
+
+logging.error = (message, line_at) => {
+  console.error('ERROR:', message, line_at);
+  logToDatabase(message, line_at, 2);
+};
+
+function stat_update(callback) {
+  const query = `SELECT * FROM control_panel`;
+  if (db) {
+    db.manyOrNone(query)
+      .then(res => {
+        for (let key in res) {
+          logDB_control_panel_code[res[key]['name']] = { ...res[key] };
+        }
+        if (callback) callback();
+      })
+      .catch(error => console.error("logdb table control_panel error", error));
+  }
+}
+
+
 function getLineNumberAndFileName() {
   const stack = new Error().stack;
   // 分割堆栈信息，取第二行
@@ -96,7 +127,13 @@ function getLineNumberAndFileName() {
   }
   return null;
 }
-module.exports = { db, logging, access_logging, getLineNumberAndFileName };
+module.exports = {
+  db,
+  logging,
+  access_logging,
+  getLineNumberAndFileName,
+  stat_update
+};
 /*
 
 */
