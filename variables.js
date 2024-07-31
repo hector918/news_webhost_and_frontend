@@ -1,9 +1,9 @@
-const logDB_control_panel_code = {};
-
+///class////////////////////////////////
 class Node {
   constructor(element) {
     this.element = element;
     this.next = null;
+    this.previous = null;
   }
 }
 
@@ -14,40 +14,32 @@ class LinkedListQueue {
     this.size = 0;
   }
 
-  // Insert element at the front
   enqueueFront(element) {
     const newNode = new Node(element);
     if (this.isEmpty()) {
       this.front = this.rear = newNode;
     } else {
       newNode.next = this.front;
+      this.front.previous = newNode;
       this.front = newNode;
     }
     this.size++;
   }
 
-  // Remove element from the rear
   dequeueRear() {
-    if (this.isEmpty()) {
-      return null;
-    }
+    if (this.isEmpty()) return null;
 
-    let currentNode = this.front;
-    let previousNode = null;
-
-    while (currentNode.next) {
-      previousNode = currentNode;
-      currentNode = currentNode.next;
-    }
-
-    const removedElement = currentNode.element;
-    if (previousNode) {
-      previousNode.next = null;
-      this.rear = previousNode;
-    } else {
+    const removedElement = this.rear.element;
+    if (this.front === this.rear) {
       this.front = this.rear = null;
+    } else {
+      this.rear = this.rear.previous;
+      if (this.rear) {
+        this.rear.next = null;
+      } else {
+        this.front = null;
+      }
     }
-
     this.size--;
     return removedElement;
   }
@@ -61,26 +53,21 @@ class LinkedListQueue {
   }
 
   frontElement() {
-    if (this.isEmpty()) {
-      return null;
-    }
-    return this.front.element;
+    return this.isEmpty() ? null : this.front.element;
   }
 
   rearElement() {
-    if (this.isEmpty()) {
-      return null;
-    }
-    return this.rear.element;
+    return this.isEmpty() ? null : this.rear.element;
   }
 }
 
 class AsyncCache {
-  constructor() {
+  constructor(maxSize = 10_000_000) {
     this.cache = new Map();
     this.timestamps = new LinkedListQueue();
     this.lock = new Map();
     this.maxAge = 1000 * 60 * 60 * 24 * 60; // 2 months in milliseconds
+    this.maxSize = maxSize;
   }
 
   async set(key, value) {
@@ -88,16 +75,26 @@ class AsyncCache {
     const lockPromise = new Promise(resolve => resolveLock = resolve);
     this.lock.set(key, lockPromise);
 
-    const previousLock = this.lock.get(key) || Promise.resolve();
-    await previousLock;
+    try {
+      const previousLock = this.lock.get(key) || Promise.resolve();
+      await previousLock;
 
-    const now = Date.now();
-    this.cache.set(key, value);
-    this.timestamps.enqueueFront({ key, timestamp: now });
+      const now = Date.now();
+      this.cache.set(key, value);
+      this.timestamps.enqueueFront({ key, timestamp: now });
 
-    resolveLock();
-    this.lock.delete(key);
-    this.cleanUp();
+      if (this.cache.size > this.maxSize) {
+        const oldestEntry = this.timestamps.dequeueRear();
+        if (oldestEntry) {
+          this.cache.delete(oldestEntry.key);
+        }
+      }
+
+      await this.cleanUp();
+    } finally {
+      resolveLock();
+      this.lock.delete(key);
+    }
   }
 
   async get(key) {
@@ -106,26 +103,47 @@ class AsyncCache {
   }
 
   async delete(key) {
-    await (this.lock.get(key) || Promise.resolve());
-    this.cache.delete(key);
-    this.cleanUp();
+    let resolveLock;
+    const lockPromise = new Promise(resolve => resolveLock = resolve);
+    this.lock.set(key, lockPromise);
+
+    try {
+      const previousLock = this.lock.get(key) || Promise.resolve();
+      await previousLock;
+
+      this.cache.delete(key);
+      await this.cleanUp();
+    } finally {
+      resolveLock();
+      this.lock.delete(key);
+    }
   }
 
-  cleanUp() {
+  async hasKey(key) {
+    await (this.lock.get(key) || Promise.resolve());
+    return this.cache.has(key);
+  }
+
+  getSize() {
+    return this.cache.size;
+  }
+  async cleanUp() {
     const now = Date.now();
     while (!this.timestamps.isEmpty()) {
       const { key, timestamp } = this.timestamps.rearElement();
       if (now - timestamp > this.maxAge) {
         this.timestamps.dequeueRear();
         this.cache.delete(key);
-        this.lock.delete(key);
       } else {
         break;
       }
     }
   }
+
 }
+////////////////////////////////////////////
+const logDB_control_panel_code = {};
 
 const memory_news_file_cache = new AsyncCache();
-
+///////////////////////////////////////////
 module.exports = { logDB_control_panel_code, memory_news_file_cache };

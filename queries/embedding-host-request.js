@@ -4,7 +4,9 @@ const { URL } = require('url');
 const { logDB_control_panel_code } = require('../variables');
 const { logging } = require('../db/logging');
 const { memory_news_file_cache } = require('../variables');
-
+const { save_to_news_cluster } = require('../queries/news-cluster');
+const { default: cluster } = require('cluster');
+/////////////////////////////////////////
 async function generate_cluster_of_news() {
   const kmean_centroid = await get_kmean();
   if (!Array.isArray(kmean_centroid)) {
@@ -15,18 +17,33 @@ async function generate_cluster_of_news() {
   const knn_result = await get_knn_by_hashs(kmean_centroid);
 
 
-  const hash_for_files = kmean_centroid;
+  const hash_for_files = [];
+  //send request if not found in memeory cache
+  for (let hash of kmean_centroid) {
+    if (!memory_news_file_cache.hasKey(hash)) hash_for_files.push(hash);
+  }
   for (let key in knn_result) {
     for (const [similarity, hash] of knn_result[key]) {
       //chech file existed in mem
-
-      hash_for_files.push(hash);
+      if (!memory_news_file_cache.hasKey(hash)) hash_for_files.push(hash);
     }
   }
-  // console.log(hash_for_files)
-  const files = await get_news_html_content_by_hash(hash_for_files);
+  //send request to get news html file, and put it back to the cache
+  if (hash_for_files.length > 0) {
+    const files = await get_news_html_content_by_hash(hash_for_files);
+    for (let key in files) {
+      memory_news_file_cache.set(key, files[key]);
+    }
+  }
 
-  console.log(files);
+  if (Array.isArray(kmean_centroid) && (typeof knn_result === "object")) {
+    ret = save_to_news_cluster({ cluster: kmean_centroid, related_neighbors: knn_result });
+  } else {
+
+    logging.error(`generate_cluster_of_news kmean is array: ${Array.isArray(kmean_centroid)}, knn_result is ${knn_result.toString()}`);
+  }
+
+
 
 }
 
