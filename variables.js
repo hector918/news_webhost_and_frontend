@@ -141,9 +141,36 @@ class AsyncCache {
   }
 
 }
+
+// 主函数，用于同时执行两个任务并合并结果
+async function async_tasks(fn_list) {
+  try {
+    // 使用 Promise.all() 同时执行两个异步任务
+    const result = await Promise.all(fn_list);
+
+    // 合并两个结果
+
+    // const combinedResults = [...result1, ...result2];
+
+    // 返回合并后的结果
+    return result;
+  } catch (error) {
+    console.error('Error executing tasks:', error);
+  }
+}
+async function async_wrapper(fn) {
+  return new Promise((resolve) => {
+    resolve(fn());
+  });
+}
 ////////////////////////////////////////////
 const logDB_control_panel_code = {};
 
 const memory_news_file_cache = new AsyncCache();
 ///////////////////////////////////////////
-module.exports = { logDB_control_panel_code, memory_news_file_cache };
+module.exports = {
+  logDB_control_panel_code, memory_news_file_cache,
+  async_tasks,
+  async_wrapper
+
+};

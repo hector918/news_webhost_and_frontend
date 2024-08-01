@@ -3,18 +3,25 @@ const https = require('https');
 const { URL } = require('url');
 const { logDB_control_panel_code } = require('../variables');
 const { logging } = require('../db/logging');
-const { memory_news_file_cache } = require('../variables');
+const { memory_news_file_cache, async_tasks, async_wrapper } = require('../variables');
 const { save_to_news_cluster } = require('../queries/news-cluster');
 /////////////////////////////////////////
+async function get_news_html_by_hash_list(hash_list) {
+  console.log(hash_list);
+  //check if exist in the memory
+  if (!Array.isArray(hash_list)) return false;
+  const hash_for_files = hash_list.filter(el => !memory_news_file_cache.hasKey(el));
+
+  async_wrapper
+
+}
+
 async function generate_cluster_of_news() {
   const kmean_centroid = await get_kmean();
-  if (!Array.isArray(kmean_centroid)) {
-    logging.error(`error in generate_cluster_of_news, ${kmean_centroid.toString()}`);
-    return false;
-  }
+  if (!Array.isArray(kmean_centroid)) return false;
 
   const knn_result = await get_knn_by_hashs(kmean_centroid);
-
+  if (knn_result === false) return false;
 
   const hash_for_files = [];
   //send request if not found in memeory cache
@@ -29,7 +36,8 @@ async function generate_cluster_of_news() {
   }
   //send request to get news html file, and put it back to the cache
   if (hash_for_files.length > 0) {
-    const files = await get_news_html_content_by_hash(hash_for_files);
+    const files = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
+    if (files === false) return false;
     for (let key in files) {
       memory_news_file_cache.set(key, files[key]);
     }
@@ -41,7 +49,6 @@ async function generate_cluster_of_news() {
 
     logging.error(`generate_cluster_of_news kmean is array: ${Array.isArray(kmean_centroid)}, knn_result is ${knn_result.toString()}`);
   }
-
 }
 //
 async function get_kmean() {
@@ -49,22 +56,40 @@ async function get_kmean() {
   if (url === undefined) return false;
   const default_options = { start_date: 'value1', end_date: 'value2' };
 
-  const responseData = await sendPostRequest(`${url}/v1/embedding/kmean_by_period`, {}, {}, 80000);
-  return responseData;
+  try {
+    const responseData = await sendPostRequest(`${url}/v1/embedding/kmean_by_period`, {}, {}, 80000);
+    return responseData;
+  } catch (error) {
+    logging.error(`get_kmean ${url} error: ${error}`);
+    return false;
+  }
+
 }
 
 async function get_knn_by_hashs(hash_list) {
   const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
   if (url === undefined) return false;
-  const responseData = await sendPostRequest(`${url}/v1/embedding/knn_by_hash`, { hash_list }, {}, 8000);
-  return responseData;
+  const default_options = { start_date: 'value1', end_date: 'value2' };
+  try {
+    const responseData = await sendPostRequest(`${url}/v1/embedding/knn_by_hash`, { hash_list }, {}, 8000);
+    return responseData;
+  } catch (error) {
+    logging.error(`get_knn_by_hashs ${url} error: ${error}`);
+    return false;
+  }
 }
 
-async function get_news_html_content_by_hash(hash_list) {
+async function get_news_html_from_smb_host_by_hash_list(hash_list) {
   const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
   if (url === undefined) return false;
-  const responseData = await sendPostRequest(`${url}/v1/file/get_news_by_hash`, { hash_list }, {}, 8000);
-  return responseData;
+
+  try {
+    const responseData = await sendPostRequest(`${url}/v1/file/get_news_by_hash`, { hash_list }, {}, 8000);
+    return responseData;
+  } catch (error) {
+    logging.error(`get_news_html_from_smb_host_by_hash_list ${url} error: ${error}`);
+    return false;
+  }
 }
 
 ///////////////////////////////////////

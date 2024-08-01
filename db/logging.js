@@ -101,14 +101,19 @@ logging.error = (message, line_at) => {
 function stat_update(callback) {
   const query = `SELECT * FROM control_panel`;
   if (db) {
-    db.manyOrNone(query)
-      .then(res => {
-        for (let key in res) {
-          logDB_control_panel_code[res[key]['name']] = { ...res[key] };
-        }
-        if (callback) callback();
-      })
-      .catch(error => console.error("logdb table control_panel error", error));
+    try {
+      db.manyOrNone(query)
+        .then(res => {
+          for (let key in res) {
+            logDB_control_panel_code[res[key]['name']] = { ...res[key] };
+          }
+          if (callback) callback();
+        })
+        .catch(error => console.error("logdb table control_panel error", error));
+    } catch (error) {
+      console.error(error);
+    }
+
   }
 }
 

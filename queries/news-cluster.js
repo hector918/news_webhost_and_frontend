@@ -14,7 +14,7 @@ const save_to_news_cluster = async (record) => {
 
 const read_lastest_record_from_news_cluster = async () => {
   try {
-    const query = `SELECT id, timestamp, related_neighbors FROM ${table_name['news_cluster']} ORDER BY id DESC LIMIT 1;`;
+    const query = `SELECT timestamp, related_neighbors FROM ${table_name['news_cluster']} ORDER BY id DESC LIMIT 1;`;
     const ret = await web_host_db.oneOrNone(query);
     return ret;
   } catch (error) {

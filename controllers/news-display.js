@@ -7,10 +7,17 @@ const { read_lastest_record_from_news_cluster } = require('../queries/news-clust
 news.get("/lastest", async (req, res) => {
   await req.common_wrapper(async () => {
     const ret = await read_lastest_record_from_news_cluster();
-    console.log(ret);
-
+    return ret;
   })
-})
+});
+
+news.post("/read_news_by_hash_list", async (req, res) => {
+  await req.common_wrapper(async () => {
+
+    // const ret = await read_lastest_record_from_news_cluster();
+    return ret;
+  })
+});
 //////////////////////////////////////////////////////
 module.exports = { news };
 
