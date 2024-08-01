@@ -5,7 +5,6 @@ const { logDB_control_panel_code } = require('../variables');
 const { logging } = require('../db/logging');
 const { memory_news_file_cache } = require('../variables');
 const { save_to_news_cluster } = require('../queries/news-cluster');
-const { default: cluster } = require('cluster');
 /////////////////////////////////////////
 async function generate_cluster_of_news() {
   const kmean_centroid = await get_kmean();
@@ -43,10 +42,8 @@ async function generate_cluster_of_news() {
     logging.error(`generate_cluster_of_news kmean is array: ${Array.isArray(kmean_centroid)}, knn_result is ${knn_result.toString()}`);
   }
 
-
-
 }
-
+//
 async function get_kmean() {
   const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
   if (url === undefined) return false;
