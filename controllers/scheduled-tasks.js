@@ -1,6 +1,3 @@
-const { logDB_control_panel_code } = require('../running-memory');
-
-const { stat_update } = require('../db/logging');
 const { generate_cluster_of_news } = require('../queries/embedding-host-request');
 ///////////////////////////////////////////////
 function scheduled_tasks() {
@@ -11,6 +8,7 @@ function scheduled_tasks() {
 async function init() {
   console.log(`scheduled_tasks called`);
 
+  // for test
   // await generate_cluster_of_news();
 
   // Asynchronous timed task

@@ -3,7 +3,6 @@
 function validateArrayBody(maxLength) {
   return (req, res, next) => {
     const body = req.body;
-    console.log(body)
     // Check if hash_list is present in the request body
     if (!body.hasOwnProperty('hash_list')) {
       return res.status(400).json({ error: 'Request body must contain hash_list as an array.' });

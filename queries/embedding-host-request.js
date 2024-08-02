@@ -5,9 +5,7 @@ const { URL } = require('url');
 
 const { logging } = require('../db/logging');
 const { html_redis } = require('../db/html-file-redis');
-
 const { save_to_news_cluster } = require('../queries/news-cluster');
-
 const embedding_host_address = process.env.EMBEDDING_HOST_ADDRESS;
 /////////////////////////////////////////
 async function get_news_html_by_hash_list(hash_list) {
@@ -43,38 +41,46 @@ async function get_news_html_by_hash_list(hash_list) {
 }
 
 async function generate_cluster_of_news() {
-  const kmean_centroid = await get_kmean();
-  if (!Array.isArray(kmean_centroid)) return false;
+  try {
+    const start_time = new Date().getTime();
 
-  const knn_result = await get_knn_by_hashs(kmean_centroid);
-  if (knn_result === false) return false;
+    const kmean_centroid = await get_kmean();
+    if (!Array.isArray(kmean_centroid)) throw `kmean_centroid error: ${kmean_centroid}`;
 
-  const hash_for_files = [];
-  //send request if not found in memeory cache
+    const knn_result = await get_knn_by_hashs(kmean_centroid);
+    if (knn_result === false) throw `get_knn_by_hashs error: ${knn_result}`;
 
-  for (let hash of kmean_centroid) {
-    if (!(await html_redis.exists(hash))) hash_for_files.push(hash);
-  }
-  for (let key in knn_result) {
-    for (const [similarity, hash] of knn_result[key]) {
-      //chech file existed in mem
+    const hash_for_files = [];
+    //send request if not found in memeory cache
+
+    for (let hash of kmean_centroid) {
       if (!(await html_redis.exists(hash))) hash_for_files.push(hash);
     }
-  }
-  //send request to get news html file, and put it back to the cache
-  if (hash_for_files.length > 0) {
-    const records = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
-    if (records === false) return false;
-    for (let key in records) {
-      html_redis.set_with_expire(key, JSON.stringify(records[key]));
+    for (let key in knn_result) {
+      for (const [similarity, hash] of knn_result[key]) {
+        //chech file existed in mem
+        if (!(await html_redis.exists(hash))) hash_for_files.push(hash);
+      }
     }
-  }
+    //send request to get news html file, and put it back to the cache
+    if (hash_for_files.length > 0) {
+      const records = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
+      if (records === false) throw `get_news_html_from_smb_host_by_hash_list error: ${hash_for_files}`;
+      for (let key in records) {
+        html_redis.set_with_expire(key, JSON.stringify(records[key]));
+      }
+    }
 
-  if (Array.isArray(kmean_centroid) && (typeof knn_result === "object")) {
-    ret = save_to_news_cluster({ cluster: kmean_centroid, related_neighbors: knn_result });
-  } else {
+    if (Array.isArray(kmean_centroid) && (typeof knn_result === "object")) {
+      ret = save_to_news_cluster({ cluster: kmean_centroid, related_neighbors: knn_result });
 
-    logging.error(`generate_cluster_of_news kmean is array: ${Array.isArray(kmean_centroid)}, knn_result is ${knn_result.toString()}`);
+      logging.info(`generate_cluster_of_news run time: ${((new Date().getTime() - start_time) / 1000).toFixed(2)} seconds`);
+
+    } else {
+      throw `generate_cluster_of_news kmean is array: ${Array.isArray(kmean_centroid)}, knn_result is ${knn_result.toString()}`;
+    }
+  } catch (error) {
+    logging.error(error);
   }
 }
 //
