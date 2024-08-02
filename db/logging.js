@@ -1,6 +1,5 @@
-
+require('dotenv').config();
 const pgp = require("pg-promise")();
-require("dotenv").config();
 
 var connectionOptions = {
   connectionString: process.env.LOGGING_DB_URL,

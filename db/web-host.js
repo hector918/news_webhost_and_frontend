@@ -1,5 +1,5 @@
+require('dotenv').config();
 const pgp = require("pg-promise")();
-require("dotenv").config();
 //注意时间戳是UTC时间
 var connectionOptions = {
   connectionString: process.env.WEB_HOST_DB_URL,

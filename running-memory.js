@@ -14,11 +14,6 @@ function masterProcessQueries(msgs) {
         return users_map.get(data);
       case "update_user_info":
         return users_map.set(data.user_name, data.user_info);
-      case "set_control_panel":
-
-        return logDB_control_panel_code[type] = data;
-      case "get_control_panel":
-        return logDB_control_panel_code[type] || undefined;
       default:
         return "unknown";
     }

@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
@@ -71,7 +70,6 @@ app.use((req, res, next) => {
     save_user_telemetry(req.body.userActivity, req.session?.user_info?.email);
   }
   //此处暂时没有作用
-  console.log("Dasdas", process.send)
   process.send({ 'query_user_info': "email" });
   req.common_wrapper = async (fn) => {
     // console.log("in common_wrapper")

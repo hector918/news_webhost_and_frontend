@@ -1,7 +1,7 @@
+require('dotenv').config();
 const session = require('express-session');
 const { Pool } = require('pg');
 const pgSession = require('connect-pg-simple')(session);
-require('dotenv').config();
 const cookie_expire_limit = 30;// unit day
 // Create a PostgreSQL connection pool
 const pool = new Pool({

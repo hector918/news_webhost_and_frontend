@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require("express");
 const test = express.Router();
 const { logging, getLineNumberAndFileName } = require('../db/logging');

@@ -630,3 +630,57 @@ export default {
   translate_component_key
 }
 
+///////
+class LinkedListQueue {
+  constructor() {
+    this.front = null;
+    this.rear = null;
+    this.size = 0;
+  }
+
+  enqueueFront(element) {
+    const newNode = new Node(element);
+    if (this.isEmpty()) {
+      this.front = this.rear = newNode;
+    } else {
+      newNode.next = this.front;
+      this.front.previous = newNode;
+      this.front = newNode;
+    }
+    this.size++;
+  }
+
+  dequeueRear() {
+    if (this.isEmpty()) return null;
+
+    const removedElement = this.rear.element;
+    if (this.front === this.rear) {
+      this.front = this.rear = null;
+    } else {
+      this.rear = this.rear.previous;
+      if (this.rear) {
+        this.rear.next = null;
+      } else {
+        this.front = null;
+      }
+    }
+    this.size--;
+    return removedElement;
+  }
+
+  isEmpty() {
+    return this.size === 0;
+  }
+
+  getSize() {
+    return this.size;
+  }
+
+  frontElement() {
+    return this.isEmpty() ? null : this.front.element;
+  }
+
+  rearElement() {
+    return this.isEmpty() ? null : this.rear.element;
+  }
+}
