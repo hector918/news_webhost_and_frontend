@@ -1,19 +1,41 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
-const { logDB_control_panel_code } = require('../variables');
+
 const { logging } = require('../db/logging');
 const { memory_news_file_cache, async_tasks, async_wrapper } = require('../variables');
 const { save_to_news_cluster } = require('../queries/news-cluster');
 /////////////////////////////////////////
 async function get_news_html_by_hash_list(hash_list) {
-  console.log(hash_list);
-  //check if exist in the memory
+  // Check if hash_list is an array
   if (!Array.isArray(hash_list)) return false;
-  const hash_for_files = hash_list.filter(el => !memory_news_file_cache.hasKey(el));
 
-  async_wrapper
+  const hash_for_files = [];
+  const result_from_mem = {};
 
+  for (const hash of hash_list) {
+    if (!memory_news_file_cache.hasKey(hash)) {
+      hash_for_files.push(hash);
+    } else {
+      result_from_mem[hash] = memory_news_file_cache.get(hash);
+    }
+  }
+
+  try {
+    const records_from_embedding_host = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
+
+    if (records_from_embedding_host !== false) {
+      for (const hash in records_from_embedding_host) {
+        result_from_mem[hash] = records_from_embedding_host[hash];
+        memory_news_file_cache.set(hash, records_from_embedding_host[hash]);
+      }
+    }
+
+  } catch (error) {
+    console.error("Error fetching records from embedding host:", error);
+  }
+
+  return result_from_mem;
 }
 
 async function generate_cluster_of_news() {
@@ -36,10 +58,10 @@ async function generate_cluster_of_news() {
   }
   //send request to get news html file, and put it back to the cache
   if (hash_for_files.length > 0) {
-    const files = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
-    if (files === false) return false;
-    for (let key in files) {
-      memory_news_file_cache.set(key, files[key]);
+    const records = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
+    if (records === false) return false;
+    for (let key in records) {
+      memory_news_file_cache.set(key, records[key]);
     }
   }
 
@@ -52,11 +74,11 @@ async function generate_cluster_of_news() {
 }
 //
 async function get_kmean() {
-  const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
-  if (url === undefined) return false;
-  const default_options = { start_date: 'value1', end_date: 'value2' };
-
   try {
+    const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
+    if (url === undefined) return false;
+    const default_options = { start_date: 'value1', end_date: 'value2' };
+
     const responseData = await sendPostRequest(`${url}/v1/embedding/kmean_by_period`, {}, {}, 80000);
     return responseData;
   } catch (error) {
@@ -67,10 +89,11 @@ async function get_kmean() {
 }
 
 async function get_knn_by_hashs(hash_list) {
-  const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
-  if (url === undefined) return false;
-  const default_options = { start_date: 'value1', end_date: 'value2' };
   try {
+
+    const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
+    if (url === undefined) return false;
+    const default_options = { start_date: 'value1', end_date: 'value2' };
     const responseData = await sendPostRequest(`${url}/v1/embedding/knn_by_hash`, { hash_list }, {}, 8000);
     return responseData;
   } catch (error) {
@@ -80,10 +103,14 @@ async function get_knn_by_hashs(hash_list) {
 }
 
 async function get_news_html_from_smb_host_by_hash_list(hash_list) {
-  const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
-  if (url === undefined) return false;
 
   try {
+    embedding_host_address = process.send({ 'get_control_panel': "embedding_host_address" });
+    console.log(embedding_host_address);
+    return;
+    const url = logDB_control_panel_code['embedding_host_address']['text'] || undefined;
+    if (url === undefined) return false;
+
     const responseData = await sendPostRequest(`${url}/v1/file/get_news_by_hash`, { hash_list }, {}, 8000);
     return responseData;
   } catch (error) {
@@ -158,4 +185,4 @@ async function sendPostRequest(url, data, headers = {}, timeout = 10000) {
 }
 
 ////////////////////
-module.exports = { generate_cluster_of_news }
+module.exports = { generate_cluster_of_news, get_news_html_by_hash_list }

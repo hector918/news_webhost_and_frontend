@@ -143,17 +143,22 @@ class AsyncCache {
 }
 
 // 主函数，用于同时执行两个任务并合并结果
-async function async_tasks(fn_list) {
+async function async_tasks(tasks) {
+
   try {
-    // 使用 Promise.all() 同时执行两个异步任务
-    const result = await Promise.all(fn_list);
+    // 使用 Promise.all() 同时执行多个异步任务
+    const results = await Promise.all(
+      Object.entries(tasks).map(async ([name, task]) => {
+        const result = await task();
+        return { [name]: result };
+      })
+    );
 
-    // 合并两个结果
-
-    // const combinedResults = [...result1, ...result2];
+    // 合并结果为一个对象
+    const combinedResults = results.reduce((acc, cur) => Object.assign(acc, cur), {});
 
     // 返回合并后的结果
-    return result;
+    return combinedResults;
   } catch (error) {
     console.error('Error executing tasks:', error);
   }
@@ -164,7 +169,7 @@ async function async_wrapper(fn) {
   });
 }
 ////////////////////////////////////////////
-const logDB_control_panel_code = {};
+const logDB_control_panel_code = new Map();
 
 const memory_news_file_cache = new AsyncCache();
 ///////////////////////////////////////////

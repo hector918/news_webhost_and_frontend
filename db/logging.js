@@ -1,4 +1,4 @@
-const { logDB_control_panel_code } = require('../variables');
+
 const pgp = require("pg-promise")();
 require("dotenv").config();
 
@@ -103,17 +103,11 @@ function stat_update(callback) {
   if (db) {
     try {
       db.manyOrNone(query)
-        .then(res => {
-          for (let key in res) {
-            logDB_control_panel_code[res[key]['name']] = { ...res[key] };
-          }
-          if (callback) callback();
-        })
+        .then(callback)
         .catch(error => console.error("logdb table control_panel error", error));
     } catch (error) {
       console.error(error);
     }
-
   }
 }
 

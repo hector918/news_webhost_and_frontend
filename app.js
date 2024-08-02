@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
@@ -48,6 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //添加公用变量，以及通过函数到req
 app.use((req, res, next) => {
+  const start_time = new Date().getTime();
   process.on('message', ({ type, result }) => {
     // for (const key in result) {
     //   switch (result) {
@@ -56,12 +58,12 @@ app.use((req, res, next) => {
     //       break;
     //   }
     // }
-    const start_time = new Date().getTime();
+    // console.log("in process message");
     next();
-    const lapse = new Date().getTime() - start_time;
     const ip = req !== undefined ? `${req.socket?.remoteAddress}:${req.socket?.remotePort}` : undefined;
     const url = req?.url || undefined;
-    access_logging(ip, url, req.session?.user_info?.email, lapse);
+    // console.log("in process message access_logging");
+    access_logging(ip, url, req.session?.user_info?.email, new Date().getTime() - start_time);
 
   });
   //user telemetry entry
@@ -69,8 +71,11 @@ app.use((req, res, next) => {
     save_user_telemetry(req.body.userActivity, req.session?.user_info?.email);
   }
   //此处暂时没有作用
+  console.log("Dasdas", process.send)
   process.send({ 'query_user_info': "email" });
   req.common_wrapper = async (fn) => {
+    // console.log("in common_wrapper")
+
     try {
       res.json({ "payload": await fn() });
     } catch (error) {
