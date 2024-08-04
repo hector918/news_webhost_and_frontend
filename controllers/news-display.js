@@ -9,15 +9,14 @@ news.get("/lastest", async (req, res) => {
   await req.common_wrapper(async () => {
     const ret = await read_lastest_record_from_news_cluster();
     return ret;
-  })
+  });
 });
 
 news.post("/read_news_by_hash_list", validateArrayBody(200), async (req, res) => {
-
   await req.common_wrapper(async () => {
     const ret = await get_news_html_by_hash_list(req.body.hash_list);
     return ret;
-  })
+  });
 });
 //////////////////////////////////////////////////////
 module.exports = { news };

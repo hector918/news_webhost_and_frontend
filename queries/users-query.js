@@ -53,7 +53,7 @@ const save_telemetry = (user_events) => {
     'timestamp',
     'user_email'
   ], { table: table_name['user_telemetry'] });
-
+  if (Array.isArray(user_events) || user_events.length === 0) return [];
   // Generate the multi-row insert query
   const query = pgp.helpers.insert(user_events, cs) + ' RETURNING id;';
 

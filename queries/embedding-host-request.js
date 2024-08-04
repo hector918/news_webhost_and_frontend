@@ -22,8 +22,9 @@ async function get_news_html_by_hash_list(hash_list) {
       result_from_mem[hash] = await html_redis.get(hash);
     }
   }
-
+  if (hash_for_files.length === 0) return result_from_mem;
   try {
+
     const records_from_embedding_host = await get_news_html_from_smb_host_by_hash_list(hash_for_files);
 
     if (records_from_embedding_host !== false) {
@@ -111,9 +112,7 @@ async function get_knn_by_hashs(hash_list) {
 }
 
 async function get_news_html_from_smb_host_by_hash_list(hash_list) {
-
   try {
-
     const responseData = await sendPostRequest(`${embedding_host_address}/v1/file/get_news_by_hash`, { hash_list }, {}, 8000);
     return responseData;
   } catch (error) {

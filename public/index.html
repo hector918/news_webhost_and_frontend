@@ -75,24 +75,23 @@
   import frame from "./frame.js";
   //Triggered When: The entire page, including all dependent resources like images, scripts, and stylesheets, have fully loaded.
   window.onload = () => {
-
-
     setTimeout(() => {
       frame.elementRoot.elementList["loading"].DOM.classList.add("hidden");
-    }, 500);
+    }, 1000);
   }
 </script>
 <script type="module">
 
   import frame from "./frame.js";
   import './instances.js';
-  //Triggered When: The initial HTML document has been completely loaded and parsed, without waiting for stylesheets, images, and subframes to finish loading.
-  document.addEventListener('DOMContentLoaded', () => {
-    // console.log(tracker)
-    // tracker.trackPageView();
 
-    // ... 其他事件监听保持不变 ...
-  });
+  //Triggered When: The initial HTML document has been completely loaded and parsed, without waiting for stylesheets, images, and subframes to finish loading.
+  // document.addEventListener('DOMContentLoaded', () => {
+  //   // console.log(tracker)
+  //   // tracker.trackPageView();
+
+  //   // ... 其他事件监听保持不变 ...
+  // });
 </script>
 
 </html>

@@ -1,6 +1,7 @@
 const compoent_name_prefix = "compoent_name_";
 const translate_component_key = "translation_";
 const id_key = "id_";
+
 //swiping matrix/////Hector on Jul 28////////////////
 class swipingMatrix {
   constructor({ parent, matrix }) {
@@ -47,6 +48,10 @@ class swipingMatrix {
     this.parent.append(this.wrapper);
     this.renderMatrix();
   }
+  updateMatrix(matrix) {
+    this.matrix = matrix;
+    this.renderMatrix();
+  }
   renderMatrix() {
     this.container.innerHTML = '';
 
@@ -63,6 +68,7 @@ class swipingMatrix {
         cell.style.justifyContent = "center";
         cell.style.boxSizing = "border - box";
         cell.classList.add('swipe_panel_cell');
+
         if (typeof this.matrix[row][col] === "string") {
           cell.innerHTML = this.matrix[row][col];
         } else {
@@ -79,6 +85,7 @@ class swipingMatrix {
     this.container.offsetHeight; // 读取属性触发重绘
     // 恢复过渡效果
     this.container.style.transition = '';
+    console.log("matrix render")
   }
 
   touchStart(e) {
@@ -157,6 +164,80 @@ class swipingMatrix {
 
   updateEvent(name, fn) {
     if (typeof fn === "function") this.eventList[name] = fn;
+  }
+}
+
+class matrixNavigator {
+  inputMatrix = null;
+  currentRow = 0;
+  currtneCol = 0;
+  outputSize = 3;
+  boarderCell = "<h1>this is boarder</h1>"
+  loadingCell = "<h1>Loading</h1>"
+  //////////////////////////////////
+  constructor({ inputMatrix, lc, initRow = 0, initCol = 0 }) {
+    this.inputMatrix = inputMatrix;
+    this.currentRow = initRow;
+    this.currtneCol = initCol;
+  }
+  getContentFromPos({ row, col }) {
+    switch (col) {
+      case 0: {
+        //means the cover col
+
+        break;
+      }
+      case -1: {
+        //mean the boarder
+        return this.boarderCell;
+      }
+    }
+    //mean the boarder
+    if (row === -1) return this.boarderCell;
+
+    const matrix = Object.values(this.inputMatrix);
+    console.log(matrix[row][col - 1]);
+    return matrix[row][col - 1];
+
+  }
+  moveZero() {
+    const ret = [];
+
+    for (let rowIdx = 0; rowIdx < this.outputSize; rowIdx++) {
+      for (let colIdx = 0; colIdx < this.outputSize; colIdx++) {
+        console.log(colIdx, colIdx);
+      }
+    }
+
+  }
+
+  moveUp() {
+    if (this.currentRow = 0) return this.moveZero();
+    this.currentRow -= 1;
+    //reset column when change row, mean change subjest
+    this.currtneCol = 0;
+
+  }
+
+  moveDown() {
+
+  }
+
+  moveRight() {
+
+  }
+
+  moveLeft() {
+
+  }
+
+  updateMatrix(matrix) {
+    this.inputMatrix = matrix;
+    console.log(this.inputMatrix);
+  }
+
+  async getHashContent(hash) {
+
   }
 }
 //////////////////////////////////////////////////////
@@ -292,7 +373,8 @@ class elementRootH {
       checkAndRun(currentPath[pathStep], params);
       currentPath = currentPath[pathStep];
     }
-    window.location.hash = `#${path}`;
+    window.location.hash = window.location.hash.charAt(0) !== '#' ? `#${path}` : `${path}`;
+
     this.tracker.trackPageView();
     ///////////////////////////
     function checkAndRun(fn, param) {
@@ -623,6 +705,7 @@ export default {
   variable,
   UserActivityTracker,
   swipingMatrix,
+  matrixNavigator,
   id_key,
   throttle,
   handleSwipe,

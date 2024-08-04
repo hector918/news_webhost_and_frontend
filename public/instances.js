@@ -1,6 +1,6 @@
 import frame from './frame.js';
 import srv from './fetch_.js';
-import ls from './localStorage.js'
+import ls from './localStorage.js';
 const id = frame.id_key;
 const elementRoot = frame.elementRoot;
 srv.attachment.userActivity = elementRoot.attachToPost;
@@ -22,12 +22,11 @@ new frame.baseComponent({
   }
 });
 //0	1	1	2	3	5	8	13	21	34	55
-new frame.baseComponent({
+const loading = new frame.baseComponent({
   name: "loading",
   fromElementId: "loading_div_h",
   parent: document.querySelector("body"),
 });
-
 //
 new frame.baseComponent({
   name: "navbar",
@@ -90,7 +89,6 @@ new frame.baseComponent({
   ]
 });
 
-
 elementRoot.setRoute("/?testing=true", (params) => {
   new frame.baseComponent({
     name: "mainPanel",
@@ -118,38 +116,78 @@ elementRoot.setRoute("/mainPanel/game.index?variable='hello world&abcd=e231/kkk"
 }));
 
 elementRoot.setRoute("/mainPanel/news.index", (function (params) {
-
   new frame.baseComponent({
     name: "mainPanel",
     structure: `<div class="is-flex-grow-1" ${id}="main_panel"></div>`,
     parent: elementRoot.elementList["root"].elements["root_div"],
   });
+
+
   const newsIndex = new frame.baseComponent({
     name: "news.index",
     structure: `<div ${id}="news.index"></div>`,
     parent: this.elementList["mainPanel"].elements['main_panel'],
 
   });
-
-  const matrixSize = 100;
-  const matrix = Array.from({ length: matrixSize }, (_, i) =>
+  const matrixSize = 3;
+  let matrix = Array.from({ length: matrixSize }, (_, i) =>
     Array.from({ length: matrixSize }, (_, j) => `Cell ${i + 1},${j + 1}`)
   );
+
+  const mn = new frame.matrixNavigator([]);
+  mn.moveZero();
+
   const swipePanel = new frame.swipingMatrix({
     parent: newsIndex.elements['news.index'],
     matrix
-  })
+  });
+
+  srv.readLatestCluster(res => {
+    if (res.payload) {
+      const hashList = {};
+      const related_neighbors = res.payload.related_neighbors;
+      mn.updateMatrix(related_neighbors);
+      for (let key in related_neighbors) {
+        hashList[key] = 1;
+        for (let [similarity, hash] of related_neighbors[key]) {
+          hashList[hash] = 1;
+        }
+      }
+
+      ls.getHTMLByHashList(Object.keys(hashList), async res => {
+        let rowCount = 0;
+        let colCount = 0;
+        matrix = [];
+        for (let key in related_neighbors) {
+          const newRow = [];
+          if (rowCount > matrixSize) break;
+          newRow.push(`<p>${key}</p>`);
+          for (let [similarity, hash] of related_neighbors[key]) {
+            if (colCount > matrixSize) break;
+            const content = await ls.getHTMLByHash(hash);
+            newRow.push(`<div class="swipe_cell">${content.html}</div>`);
+          }
+          matrix.push(newRow);
+        }
+        swipePanel.updateMatrix(matrix);
+      });
+
+    } else {
+      console.log(res);
+    }
+  });
 
 }));
 
 //init the app start with url
+
 if (window.location.hash) {
   elementRoot.goRoute(window.location.hash);
 } else elementRoot.goRoute("/");
 
 const variablePool = {};
 variablePool.user_info = new frame.variable("hello");
-variablePool.user_info.onChangeCall(elementRoot.get("navbar"), "testing");
+// variablePool.user_info.onChangeCall(elementRoot.get("navbar"), "testing");
 
 variablePool.languageSet = new frame.variable({});
 variablePool.languageSet.onChangeCall(elementRoot.get("root"), "changeLanguage");
@@ -160,9 +198,9 @@ srv.loadLanguage("simplify-chinese", (data, statusCode) => {
 });
 
 //test code
-setTimeout(() => {
-  variablePool.user_info.set("world");
-}, (2000));
+// setTimeout(() => {
+//   variablePool.user_info.set("world");
+// }, (2000));
 
 export { }
 //event

@@ -32,11 +32,10 @@ function fetch_post(url, fetchOptions, callback, method = 'POST') {
   }
 
   fetchOptions.body = JSON.stringify(fetchOptions.body);
-  console.log(fetchOptions)
   fetchOptions.headers = {
     ...default_fetch_options,
     ...fetchOptions.headers,
-  }
+  };
   if (fetchOptions.headers['Content-Type'] === "delete")
     delete fetchOptions.headers['Content-Type'];
   //add cookies before fire
@@ -132,7 +131,7 @@ function fetch_delete(url, callback) {
     });
 }
 
-////////////////////////////////////////////
+////entry////////////////////////////////////////
 function loadLanguage(language, callback) {
   fetch_get(`${API}/languages/${language}.json`, callback);
 }
@@ -145,4 +144,17 @@ function pageUnloadEvent(body, callback) {
   fetch_post(`${API}/v1/testing`, { body }, callback);
 }
 
-export default { attachment, loadLanguage, pageUnloadEvent, testPost }
+function readLatestCluster(callback) {
+  fetch_get(`${API}/v1/news/lastest`, callback);
+}
+
+function getHTMLByHashList(hashList, callback) {
+  fetch_post(`${API}/v1/news/read_news_by_hash_list`, {
+    body: {
+      hash_list: hashList
+    }
+  }, callback);
+}
+
+//export////////////////
+export default { attachment, loadLanguage, pageUnloadEvent, readLatestCluster, getHTMLByHashList, testPost, error_handle }
