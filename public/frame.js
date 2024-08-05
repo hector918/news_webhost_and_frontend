@@ -38,7 +38,7 @@ class swipingMatrix {
       "endSwipe": (action) => { },
     }
     for (let key in events) {
-      this.eventList[key] = events[key];
+      this.eventList[key] = events[key].bind(this);
     }
 
     //set parent
@@ -52,14 +52,12 @@ class swipingMatrix {
     this.renderMatrix();
   }
   updateMatrix(matrix) {
+    console.log(matrix);
     this.matrix = matrix;
-    console.log(this.matrix);
     this.renderMatrix();
   }
   renderMatrix() {
-    console.log(this.matrix);
     this.container.innerHTML = '';
-
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
         const row = i + 1;
@@ -68,12 +66,13 @@ class swipingMatrix {
         const cell = document.createElement('div');
         cell.style.flex = "0 0 33.33%";
         cell.style.height = "33.33%";
+        cell.style.width = "33.33%";
         cell.style.display = "flex";
         cell.style.alignItems = "center";
         cell.style.justifyContent = "center";
         cell.style.boxSizing = "border - box";
         cell.classList.add('swipe_panel_cell');
-        // console.log(typeof this.matrix[row][col], this.matrix[row][col], row, col)
+
         switch (typeof this.matrix[row][col]) {
           case "string":
             cell.innerHTML = this.matrix[row][col];
@@ -88,6 +87,7 @@ class swipingMatrix {
           default:
             cell.append(this.matrix[row][col]);
         }
+
         this.container.appendChild(cell);
       }
     }
@@ -99,7 +99,6 @@ class swipingMatrix {
     this.container.offsetHeight; // 读取属性触发重绘
     // 恢复过渡效果
     this.container.style.transition = '';
-    console.log("matrix render");
   }
 
   touchStart(e) {
@@ -167,13 +166,14 @@ class swipingMatrix {
       //continue the move
       setTimeout(() => {
         this.renderMatrix();
+        //trigger touch end event callback
+        if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
       }, this.transformDuration * 1000);
     } else {
       //reset the position
       this.container.style.transform = `translate(-33.33%, -33.33%)`;
     }
-    //trigger touch end event callback
-    if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
+
   }
 
   updateEvent(name, fn) {
@@ -201,7 +201,8 @@ class matrixNavigator {
   getContentFromPos({ row, col }) {
     try {
       //mean the boarder
-      if (row == -1) return this.boarderCell;
+
+      if (row === -1) return this.boarderCell;
       switch (col) {
         case 0: {
           //means the cover col
@@ -226,6 +227,7 @@ class matrixNavigator {
   }
 
   moveZero() {
+    console.log(this.currentRow, this.currtneCol);
     const ret = [];
     for (let rowIdx = 0; rowIdx < this.outputSize; rowIdx++) {
       const rowArr = [];
@@ -240,8 +242,8 @@ class matrixNavigator {
   }
 
   moveUp() {
-    if (this.currentRow === 0) return this.moveZero();
-    this.currentRow -= 1;
+    if (this.currentRow >= Object.keys(this.inputMatrix).length - 1) return this.moveZero();
+    this.currentRow += 1;
     //reset column when change row, mean change subjest
     this.currtneCol = 0;
     return this.moveZero();
@@ -249,11 +251,11 @@ class matrixNavigator {
 
   moveDown() {
     try {
-      if (this.currentRow < Object.keys(this.inputMatrix).length - 1) {
-        this.currentRow++;
-        //reset column when change row, mean change subjest
-        this.currtneCol = 0;
-      }
+      if (this.currentRow === 0) return this.moveZero();
+
+      this.currentRow--;
+      //reset column when change row, mean change subjest
+      this.currtneCol = 0;
       return this.moveZero();
     } catch (error) {
       return this.moveZero();

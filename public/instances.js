@@ -131,7 +131,7 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
   });
   const matrixSize = 3;
   let matrix = Array.from({ length: matrixSize }, (_, i) =>
-    Array.from({ length: matrixSize }, (_, j) => `Cell ${i + 1},${j + 1}`)
+    Array.from({ length: matrixSize }, (_, j) => `Loading ${i + 1},${j + 1}`)
   );
   const mn = new frame.matrixNavigator({ indexedDB: ls.dbWrapper });
 
@@ -140,8 +140,21 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
     parent: newsIndex.elements['news.index'],
     matrix,
     events: {
-      "endSwipe": (moveDirection) => {
-        console.log(moveDirection);
+      "endSwipe": function (moveDirection) {
+        switch (moveDirection) {
+          case "up":
+            this.updateMatrix(mn.moveUp());
+            break;
+          case "down":
+            this.updateMatrix(mn.moveDown());
+            break;
+          case "right":
+            this.updateMatrix(mn.moveRight());
+            break;
+          case "left":
+            this.updateMatrix(mn.moveLeft());
+            break;
+        }
       }
     }
   });
@@ -151,8 +164,6 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
       const hashList = {};
       const related_neighbors = res.payload.related_neighbors;
       mn.updateMatrix(related_neighbors);
-      mn.moveDown();
-      mn.moveDown();
       swipePanel.updateMatrix(mn.moveZero());
       for (let key in related_neighbors) {
         hashList[key] = 1;
@@ -160,23 +171,8 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
           hashList[hash] = 1;
         }
       }
-
       ls.getHTMLByHashList(Object.keys(hashList), async res => {
-        let rowCount = 0;
-        let colCount = 0;
-        matrix = [];
-        for (let key in related_neighbors) {
-          const newRow = [];
-          if (rowCount > matrixSize) break;
-          newRow.push(`<p>${key}</p>`);
-          for (let [similarity, hash] of related_neighbors[key]) {
-            if (colCount > matrixSize) break;
-            const content = await ls.getHTMLByHash(hash);
-            newRow.push(`<div class="swipe_cell">${content.html}</div>`);
-          }
-          matrix.push(newRow);
-        }
-        // swipePanel.updateMatrix(matrix);
+        //update news object to indexedDB
       });
 
     } else {
