@@ -4,7 +4,7 @@ const id_key = "id_";
 
 //swiping matrix/////Hector on Jul 28////////////////
 class swipingMatrix {
-  constructor({ parent, matrix }) {
+  constructor({ parent, matrix, events }) {
     this.id = generateRandomString(10);
     this.wrapper = document.createElement('div');
     this.wrapper.style.position = "relative";
@@ -35,7 +35,10 @@ class swipingMatrix {
     this.directionLocked = null;
     this.transformDuration = 0.3;
     this.eventList = {
-      "endSwipe": () => { },
+      "endSwipe": (action) => { },
+    }
+    for (let key in events) {
+      this.eventList[key] = events[key];
     }
 
     //set parent
@@ -50,9 +53,11 @@ class swipingMatrix {
   }
   updateMatrix(matrix) {
     this.matrix = matrix;
+    console.log(this.matrix);
     this.renderMatrix();
   }
   renderMatrix() {
+    console.log(this.matrix);
     this.container.innerHTML = '';
 
     for (let i = -1; i <= 1; i++) {
@@ -68,11 +73,20 @@ class swipingMatrix {
         cell.style.justifyContent = "center";
         cell.style.boxSizing = "border - box";
         cell.classList.add('swipe_panel_cell');
-
-        if (typeof this.matrix[row][col] === "string") {
-          cell.innerHTML = this.matrix[row][col];
-        } else {
-          cell.append(this.matrix[row][col]);
+        // console.log(typeof this.matrix[row][col], this.matrix[row][col], row, col)
+        switch (typeof this.matrix[row][col]) {
+          case "string":
+            cell.innerHTML = this.matrix[row][col];
+            break;
+          case "function":
+            this.matrix[row][col](({ html }) => {
+              const content = `<div class='swipe_cell'>${html}</div>`;
+              cell.innerHTML = content;
+              this.matrix[row][col] = content;
+            });
+            break;
+          default:
+            cell.append(this.matrix[row][col]);
         }
         this.container.appendChild(cell);
       }
@@ -85,7 +99,7 @@ class swipingMatrix {
     this.container.offsetHeight; // 读取属性触发重绘
     // 恢复过渡效果
     this.container.style.transition = '';
-    console.log("matrix render")
+    console.log("matrix render");
   }
 
   touchStart(e) {
@@ -130,20 +144,20 @@ class swipingMatrix {
       if (Math.abs(diffX) > window.innerWidth / 6) {
         if (diffX > 0) {
           this.container.style.transform = `translate(0%, -33.33%)`;
-          moveDirection = "up";
+          moveDirection = "right";
         } else {
           this.container.style.transform = `translate(-66.66%, -33.33%)`;
-          moveDirection = "down";
+          moveDirection = "left";
         }
       }
     } else if (this.directionLocked === 'vertical') {
       if (Math.abs(diffY) > window.innerHeight / 6) {
         if (diffY > 0) {
           this.container.style.transform = `translate(-33.33%, 0%)`;
-          moveDirection = "left";
+          moveDirection = "down";
         } else {
           this.container.style.transform = `translate(-33.33%, -66.66%)`;
-          moveDirection = "right";
+          moveDirection = "up";
         }
       }
     }
@@ -175,70 +189,101 @@ class matrixNavigator {
   boarderCell = "<h1>this is boarder</h1>"
   loadingCell = "<h1>Loading</h1>"
   //////////////////////////////////
-  constructor({ inputMatrix, lc, initRow = 0, initCol = 0 }) {
+  constructor({ inputMatrix, indexedDB, lc, initRow = 0, initCol = 0 }) {
     this.inputMatrix = inputMatrix;
     this.currentRow = initRow;
     this.currtneCol = initCol;
+    this.indexedDB = indexedDB;
+  }
+  getContentFromDataSource(hash, callback) {
+    this.indexedDB.getDataWithCallback(hash, callback);
   }
   getContentFromPos({ row, col }) {
-    switch (col) {
-      case 0: {
-        //means the cover col
-
-        break;
+    try {
+      //mean the boarder
+      if (row == -1) return this.boarderCell;
+      switch (col) {
+        case 0: {
+          //means the cover col
+          const hash = Object.keys(this.inputMatrix)[row];
+          return (callback) => {
+            this.getContentFromDataSource(hash, callback);
+          };
+        }
+        case -1: {
+          //mean the boarder
+          return this.boarderCell;
+        }
       }
-      case -1: {
-        //mean the boarder
-        return this.boarderCell;
-      }
+      const matrix = Object.values(this.inputMatrix);
+      const [similarity, hash] = matrix[row][col - 1];
+      if (!hash) throw `hash in getContentFromPos error: ${hash}`;
+      return (callback) => { this.getContentFromDataSource(hash, callback) };
+    } catch (error) {
+      console.error(row, col, error);
+      return this.loadingCell;
     }
-    //mean the boarder
-    if (row === -1) return this.boarderCell;
-
-    const matrix = Object.values(this.inputMatrix);
-    console.log(matrix[row][col - 1]);
-    return matrix[row][col - 1];
-
   }
+
   moveZero() {
     const ret = [];
-
     for (let rowIdx = 0; rowIdx < this.outputSize; rowIdx++) {
+      const rowArr = [];
       for (let colIdx = 0; colIdx < this.outputSize; colIdx++) {
-        console.log(colIdx, colIdx);
+        const row = this.currentRow - 1 + rowIdx;
+        const col = this.currtneCol - 1 + colIdx;
+        rowArr.push(this.getContentFromPos({ row, col }));
       }
+      ret.push(rowArr);
     }
-
+    return ret;
   }
 
   moveUp() {
-    if (this.currentRow = 0) return this.moveZero();
+    if (this.currentRow === 0) return this.moveZero();
     this.currentRow -= 1;
     //reset column when change row, mean change subjest
     this.currtneCol = 0;
-
+    return this.moveZero();
   }
 
   moveDown() {
-
+    try {
+      if (this.currentRow < Object.keys(this.inputMatrix).length - 1) {
+        this.currentRow++;
+        //reset column when change row, mean change subjest
+        this.currtneCol = 0;
+      }
+      return this.moveZero();
+    } catch (error) {
+      return this.moveZero();
+    }
   }
 
   moveRight() {
-
+    try {
+      const row = Object.values(this.inputMatrix)[this.currentRow];
+      if (this.currtneCol < row.length - 1) this.currtneCol++;
+      return this.moveZero();
+    } catch (error) {
+      return this.moveZero();
+    }
   }
 
   moveLeft() {
-
+    try {
+      if (this.currtneCol > 0) this.currtneCol--;
+      return this.moveZero();
+    } catch (error) {
+      return this.moveZero();
+    }
   }
 
   updateMatrix(matrix) {
     this.inputMatrix = matrix;
-    console.log(this.inputMatrix);
+    // console.log(this.inputMatrix);
   }
 
-  async getHashContent(hash) {
-
-  }
 }
 //////////////////////////////////////////////////////
 class UserEvent {

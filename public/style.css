@@ -25,7 +25,7 @@ body{
 @media (max-width: 768px) {
   /* Your CSS for smaller windows */
   body {
-      background-color: lightgreen;
+      /* background-color: lightgreen; */
   }
   .root_{
     flex-direction: column;
@@ -36,7 +36,7 @@ body{
 @media (max-width: 768px) and (pointer: coarse) {
   /* Your CSS for touchable small windows */
   body {
-      background-color: lightcoral;
+      /* background-color: lightcoral; */
   }
   .root_{
     flex-direction: column-reverse;
@@ -47,7 +47,6 @@ body{
     height: 100%;
   }
 }
-
 
 .swipe_cell{
   height: 100%;

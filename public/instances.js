@@ -133,13 +133,17 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
   let matrix = Array.from({ length: matrixSize }, (_, i) =>
     Array.from({ length: matrixSize }, (_, j) => `Cell ${i + 1},${j + 1}`)
   );
+  const mn = new frame.matrixNavigator({ indexedDB: ls.dbWrapper });
 
-  const mn = new frame.matrixNavigator([]);
-  mn.moveZero();
 
   const swipePanel = new frame.swipingMatrix({
     parent: newsIndex.elements['news.index'],
-    matrix
+    matrix,
+    events: {
+      "endSwipe": (moveDirection) => {
+        console.log(moveDirection);
+      }
+    }
   });
 
   srv.readLatestCluster(res => {
@@ -147,6 +151,9 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
       const hashList = {};
       const related_neighbors = res.payload.related_neighbors;
       mn.updateMatrix(related_neighbors);
+      mn.moveDown();
+      mn.moveDown();
+      swipePanel.updateMatrix(mn.moveZero());
       for (let key in related_neighbors) {
         hashList[key] = 1;
         for (let [similarity, hash] of related_neighbors[key]) {
@@ -169,7 +176,7 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
           }
           matrix.push(newRow);
         }
-        swipePanel.updateMatrix(matrix);
+        // swipePanel.updateMatrix(matrix);
       });
 
     } else {

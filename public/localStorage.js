@@ -52,6 +52,24 @@ class IndexedDBWrapper {
       }
     });
   }
+  getDataWithCallback(key, callback) {
+    let transaction = this.db.transaction([this.storeName], 'readonly');
+    let objectStore = transaction.objectStore(this.storeName);
+    let request = objectStore.get(key);
+
+    request.onsuccess = () => {
+      if (request.result === undefined) {
+        this.deleteData(key);
+        callback(null);
+      } else {
+        callback(request.result);
+      }
+    };
+
+    request.onerror = (event) => {
+      callback(false, `Data fetch failed: ${event.target.errorCode}`);
+    };
+  }
 
   async getData(key) {
     return new Promise((resolve, reject) => {
@@ -172,4 +190,4 @@ async function getHTMLByHash(hash) {
   }
 }
 
-export default { getHTMLByHashList, getHTMLByHash }
+export default { getHTMLByHashList, getHTMLByHash, dbWrapper }
