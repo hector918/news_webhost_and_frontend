@@ -99,7 +99,6 @@ user.get('/logout', async (req, res) => {
       if (err) {
         logging('Error logging out', getLineNumberAndFileName(), 3);
       }
-
     });
     return 'Logout successful';
   })

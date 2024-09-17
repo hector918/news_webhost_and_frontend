@@ -44,18 +44,23 @@ new frame.baseComponent({
         <a 
           class="navbar-item" 
           ${id}="button-1" 
-          ${frame.translate_component_key}="news"
-        >testing</a>
+          ${frame.translate_component_key}="test button"
+        >button</a>
         <a 
           class="navbar-item" 
           ${id}="button-2"
-          ${frame.translate_component_key}="profile"
-        >testing</a>
+          ${frame.translate_component_key}="news"
+        >button</a>
         <a 
           class="navbar-item" 
-          ${id}="button-3"${frame.translate_component_key}="testing"
-        >testing</a>
-        <a class="navbar-item" ${id}="button-4">testing</a>
+          ${id}="button-3"
+          ${frame.translate_component_key}="testing"
+        >button</a>
+        <a 
+          class="navbar-item" 
+          ${id}="button-4"
+          ${frame.translate_component_key}="setting"
+        >button</a>
         
       </div>
       
@@ -84,6 +89,11 @@ new frame.baseComponent({
         srv.testPost({ testing: "hello world" }, (data, code) => {
           console.log(data, code);
         })
+      }
+    },
+    {
+      target: "button-4", event: "click", fn: (evt) => {
+        elementRoot.goRoute("/setting");
       }
     },
   ]
@@ -159,6 +169,7 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
     }
   });
 
+
   srv.readLatestCluster(res => {
     if (res.payload) {
       const hashList = {};
@@ -182,6 +193,57 @@ elementRoot.setRoute("/mainPanel/news.index", (function (params) {
 
 }));
 
+elementRoot.setRoute("/setting", (function (params) {
+  const setting = new frame.baseComponent({
+    name: "setting",
+    structure: `<div ${id}="setting">
+      setting
+    </div>`,
+    parent: elementRoot.elementList["root"].elements["root_div"],
+    script: [
+      "checkout.js", "https://js.stripe.com/v3/"
+    ]
+  });
+  const settingIndex = new frame.baseComponent({
+    name: "setting.index",
+    structure: `<div ${id}="setting.index">
+      
+      <button
+        ${id}="button-setting-subscription"
+        ${frame.translate_component_key}="subscription"
+      >goto subscription</button>
+    </div>`,
+    parent: setting.elements["setting"],
+    events: [
+      {
+        target: "button-setting-subscription", event: "click", fn: (evt) => {
+          elementRoot.goRoute("/setting/subscription");
+        }
+      },
+    ]
+  });
+}));
+
+elementRoot.setRoute("/setting/subscription", (function (params) {
+  const setting = new frame.baseComponent({
+    name: "setting",
+    structure: `<div ${id}="setting.index">setting</div>`,
+    parent: elementRoot.elementList["root"].elements["root_div"],
+    script: [
+      "https://js.stripe.com/v3/", "checkout.js",
+    ]
+  });
+
+  const subscription = new frame.baseComponent({
+    name: "setting.subscription",
+    structure: `<div ${id}="setting.subscription">
+      <div id="checkout">
+        <!-- Checkout will insert the payment form here -->
+      </div>
+    </div>`,
+    parent: setting.elements["setting"],
+  });
+}));
 //init the app start with url
 
 if (window.location.hash) {

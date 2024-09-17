@@ -4,9 +4,10 @@ const express = require('express');
 const app = express();
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
+const compression = require('compression');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const RedisStore = require("connect-redis").default
+const RedisStore = require("connect-redis").default;
 const { session_redis } = require('./db/session-redis');
 const { user, save_user_telemetry } = require('./controllers/user-control');
 const { logging, access_logging } = require('./db/logging');
@@ -24,6 +25,8 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+// Enable GZIP compression
+app.use(compression());
 // Session configuration
 app.use(session({
   store: new RedisStore({
@@ -76,6 +79,15 @@ app.use((req, res, next) => {
 
     try {
       res.json({ "payload": await fn() });
+    } catch (error) {
+      res.status(500).json({ "error": error.message });
+    }
+  }
+  req.compress_wrapper = async (fn) => {
+    // console.log("in common_wrapper")
+
+    try {
+      res.send(await fn());
     } catch (error) {
       res.status(500).json({ "error": error.message });
     }

@@ -2,8 +2,9 @@ const compoent_name_prefix = "compoent_name_";
 const translate_component_key = "translation_";
 const id_key = "id_";
 
-//swiping matrix/////Hector on Jul 28////////////////
+//swiping matrix/////Hector on Jul 28 2024////////////////
 class swipingMatrix {
+  cells = [];
   constructor({ parent, matrix, events }) {
     this.id = generateRandomString(10);
     this.wrapper = document.createElement('div');
@@ -24,6 +25,7 @@ class swipingMatrix {
     this.container.addEventListener('touchmove', this.touchMove.bind(this));
     this.container.addEventListener('touchend', this.touchEnd.bind(this));
     this.wrapper.append(this.container);
+    this.createDomCell();
 
     //init variable
     this.matrix = matrix;
@@ -51,18 +53,12 @@ class swipingMatrix {
     this.parent.append(this.wrapper);
     this.renderMatrix();
   }
-  updateMatrix(matrix) {
-    console.log(matrix);
-    this.matrix = matrix;
-    this.renderMatrix();
-  }
-  renderMatrix() {
-    this.container.innerHTML = '';
+  createDomCell() {
     for (let i = -1; i <= 1; i++) {
+      const tmpRow = [];
       for (let j = -1; j <= 1; j++) {
         const row = i + 1;
         const col = j + 1;
-
         const cell = document.createElement('div');
         cell.style.flex = "0 0 33.33%";
         cell.style.height = "33.33%";
@@ -72,23 +68,44 @@ class swipingMatrix {
         cell.style.justifyContent = "center";
         cell.style.boxSizing = "border - box";
         cell.classList.add('swipe_panel_cell');
+        this.container.appendChild(cell);
+        tmpRow.push(cell);
+      }
+      this.cells.push(tmpRow);
+    }
+  }
+
+  updateMatrix(matrix) {
+    console.log(matrix)
+    this.matrix = matrix;
+    this.renderMatrix();
+  }
+  renderMatrix() {
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        const row = i + 1;
+        const col = j + 1;
+        const cell = this.cells[row][col];
 
         switch (typeof this.matrix[row][col]) {
           case "string":
             cell.innerHTML = this.matrix[row][col];
             break;
           case "function":
-            this.matrix[row][col](({ html }) => {
-              const content = `<div class='swipe_cell'>${html}</div>`;
+            this.matrix[row][col](resp => {
+              if (resp === null) {
+                //maybe here should be call request data again. aug 6 2024 hector
+                return
+              }
+              const { html } = resp;
+              let content = `<div class='swipe_cell'>${html}</div>`;
               cell.innerHTML = content;
               this.matrix[row][col] = content;
             });
             break;
           default:
-            cell.append(this.matrix[row][col]);
+            cell.innerHTML = this.matrix[row][col];
         }
-
-        this.container.appendChild(cell);
       }
     }
     // 暂时移除过渡效果
@@ -143,10 +160,10 @@ class swipingMatrix {
       if (Math.abs(diffX) > window.innerWidth / 6) {
         if (diffX > 0) {
           this.container.style.transform = `translate(0%, -33.33%)`;
-          moveDirection = "right";
+          moveDirection = "left";
         } else {
           this.container.style.transform = `translate(-66.66%, -33.33%)`;
-          moveDirection = "left";
+          moveDirection = "right";
         }
       }
     } else if (this.directionLocked === 'vertical') {
@@ -167,13 +184,13 @@ class swipingMatrix {
       setTimeout(() => {
         this.renderMatrix();
         //trigger touch end event callback
-        if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
-      }, this.transformDuration * 1000);
+
+      }, this.transformDuration * 1000 * 0.5);
     } else {
       //reset the position
       this.container.style.transform = `translate(-33.33%, -33.33%)`;
     }
-
+    if (this.eventList['endSwipe']) this.eventList['endSwipe'](moveDirection);
   }
 
   updateEvent(name, fn) {
@@ -181,6 +198,7 @@ class swipingMatrix {
   }
 }
 
+//matrix navigator // hecor on Aug 3 2024////////////////
 class matrixNavigator {
   inputMatrix = null;
   currentRow = 0;
@@ -201,7 +219,6 @@ class matrixNavigator {
   getContentFromPos({ row, col }) {
     try {
       //mean the boarder
-
       if (row === -1) return this.boarderCell;
       switch (col) {
         case 0: {
@@ -283,7 +300,6 @@ class matrixNavigator {
 
   updateMatrix(matrix) {
     this.inputMatrix = matrix;
-    // console.log(this.inputMatrix);
   }
 
 }
@@ -530,7 +546,7 @@ class baseComponent {
   elements = {};
   renders = {};
 
-  constructor({ name, structure, parent, render, events, variable, fromElementId }) {
+  constructor({ name, structure, parent, render, events, variable, script, fromElementId }) {
     if (elementRoot.has(name)) {
       console.warn(`component name ${name} already existed.`);
       return elementRoot.get(name);
@@ -561,6 +577,11 @@ class baseComponent {
       if (this.elements[target] && typeof fn === "function") {
         this.elements[target].addEventListener(event, fn.bind(this));
       }
+    }
+    //script
+    this.script = [];
+    if (script) for (let itm of script) {
+      this.script.push(loadScript(itm));
     }
   }
 
@@ -593,6 +614,7 @@ class baseComponent {
     for (let el of descendants) {
       // elementRoot[el.getAttribute(compoent_name_prefix)].destory();
     }
+    for (let itm in this.script) unloadScript(itm);
     this.renders = null;
     this.DOM.remove();
   }
@@ -692,6 +714,24 @@ function getDescendants(element, conditionFn) {
   traverse(element);
   return descendants;
 }
+//动态加载js
+function loadScript(url, callback) {
+  const script = document.createElement('script');
+  script.src = url;
+  script.type = 'text/javascript';
+  script.onload = function () {
+    if (callback) callback();
+  };
+  document.head.appendChild(script);
+  return script;
+}
+
+// 卸载 JavaScript 文件
+function unloadScript(scriptElement) {
+  if (scriptElement && scriptElement.parentNode) {
+    scriptElement.parentNode.removeChild(scriptElement);
+  }
+}
 //动态加载css
 async function loadStyles(stylesheets, parent = document.head) {
   if (parent === undefined) return false;
@@ -757,7 +797,9 @@ export default {
   throttle,
   handleSwipe,
   elementRoot,
-  translate_component_key
+  translate_component_key,
+  loadScript,
+  unloadScript
 }
 
 ///////

@@ -19,9 +19,17 @@ function validateArrayBody(maxLength) {
     }
 
     // Proceed to the next middleware or route handler
+    for (const hash of body['hash_list']) if (isValidHash(hash) === false) return res.status(400).json({ error: `${hash} is not a vaild hash.` });
     next();
   };
 }
 
 /////////////////////////////////////
 module.exports = { validateArrayBody }
+
+
+/////////////////////////////////////
+function isValidHash(hash) {
+  const hashRegex = /^[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{128}$/;
+  return hashRegex.test(hash);
+}

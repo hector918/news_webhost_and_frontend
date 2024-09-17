@@ -1,6 +1,10 @@
 import srv from './fetch_.js';
 const htmlKeyPrefix = "object_";
+const handleError = (error) => {
+  console.error(error);
+}
 //////////////////////////////////////
+
 class IndexedDBWrapper {
   constructor(dbName, storeName) {
     this.dbName = dbName;
@@ -53,12 +57,15 @@ class IndexedDBWrapper {
     });
   }
   getDataWithCallback(key, callback) {
+    console.log("on call get data")
     let transaction = this.db.transaction([this.storeName], 'readonly');
     let objectStore = transaction.objectStore(this.storeName);
     let request = objectStore.get(key);
 
     request.onsuccess = () => {
+      console.log(request.result, key)
       if (request.result === undefined) {
+
         this.deleteData(key);
         callback(null);
       } else {
@@ -67,7 +74,8 @@ class IndexedDBWrapper {
     };
 
     request.onerror = (event) => {
-      callback(false, `Data fetch failed: ${event.target.errorCode}`);
+      console.log(`Data fetch failed: ${event.target.errorCode}`)
+      callback(false);
     };
   }
 
@@ -113,22 +121,6 @@ class IndexedDBWrapper {
   }
 }
 
-// 使用示例
-// (async () => {
-//   const dbWrapper = new IndexedDBWrapper('myDatabase', 'myObjectStore');
-
-//   try {
-//     await dbWrapper.openDB();
-//     console.log(await dbWrapper.putData('key1', { name: 'John Doe', age: 30 }));
-//     console.log(await dbWrapper.getData('key1'));
-//     console.log(await dbWrapper.putData('key1', { name: 'Jane Doe', age: 31 }));
-//     console.log(await dbWrapper.getData('key1'));
-//     console.log(await dbWrapper.deleteData('key1'));
-//   } catch (error) {
-//     console.error(error);
-//   }
-// })();
-
 
 const dbWrapper = new IndexedDBWrapper('html_object', 'objectStore');
 try {
@@ -147,7 +139,7 @@ async function getHTMLByHashList(hashList, callback) {
       const temp = await dbWrapper.getData(hash);
 
       if (temp === false) {
-        console.log(temp)
+
         hashListForRequest.push(hash);
       } else {
         ret[hash] = temp;
@@ -158,9 +150,11 @@ async function getHTMLByHashList(hashList, callback) {
       continue;
     }
   }
+  console.log(hashListForRequest.length)
   if (hashListForRequest.length > 0) {
     try {
       srv.getHTMLByHashList(hashListForRequest, res => {
+        console.log(Object.keys(res['payload']).length)
         if (res['payload']) for (let hash in res['payload']) {
           dbWrapper.putData(hash, res['payload'][hash]);
           ret[hash] = res['payload'][hash];
